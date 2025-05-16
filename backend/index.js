@@ -3,12 +3,18 @@ const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
 const multer = require('multer');
+const cors = require('cors'); // Import CORS
+
 
 const app = express();
 const port = 3001;
 const upload = multer();
 
 app.use(bodyParser.json());
+
+// Enable CORS
+app.use(cors());
+
 
 // AWS Configuration
 AWS.config.update({
