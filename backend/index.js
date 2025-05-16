@@ -2,22 +2,46 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
+const multer = require('multer');
 
 const app = express();
 const port = 3001;
+const upload = multer();
 
 app.use(bodyParser.json());
 
 // AWS Configuration
 AWS.config.update({
-  region: 'us-east-1',
+  region: process.env.AWS_REGION || 'us-east-1',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
+  },
 });
 const s3 = new AWS.S3();
-const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const dynamoDBConfig = {
+  region: process.env.AWS_REGION || 'us-east-1',
+  endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
+  },
+};
+
+const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
 
 // Route for logging events
-app.post('/log-event', async (req, res) => {
-  const { event, file } = req.body;
+app.post('/log-event', upload.none(), async (req, res) => {
+  const { event } = req.body;
+  const file = req.file; // Adjusted to handle file uploads if needed
+
+  // Add detailed logging
+  console.log('Received event:', event);
+  if (file) {
+    console.log('Received file:', file.name);
+  } else {
+    console.log('No file provided');
+  }
 
   try {
     // Save event to DynamoDB
@@ -25,10 +49,11 @@ app.post('/log-event', async (req, res) => {
       TableName: 'DailyLogEvents',
       Item: {
         id: Date.now().toString(),
-        event,
+        event: event || 'No description provided',
         timestamp: new Date().toISOString(),
       },
     };
+    console.log('Saving event to DynamoDB:', params);
     await dynamoDB.put(params).promise();
 
     // Upload file to S3 (if provided)
@@ -38,6 +63,7 @@ app.post('/log-event', async (req, res) => {
         Key: `${params.Item.id}-${file.name}`,
         Body: Buffer.from(file.content, 'base64'),
       };
+      console.log('Uploading file to S3:', s3Params);
       await s3.upload(s3Params).promise();
     }
 

@@ -20,9 +20,13 @@ function LogEvent() {
           'Content-Type': 'multipart/form-data',
         },
       });
-      setMessage(response.data);
+      if (response.status === 200) {
+        setMessage(response.data);
+      } else {
+        setMessage('Unexpected response from server');
+      }
     } catch (error) {
-      console.error('Error logging event:', error);
+      console.error('Error logging event:', error.response || error.message);
       setMessage('Error logging event');
     }
   };
