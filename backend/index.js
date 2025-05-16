@@ -37,14 +37,14 @@ const dynamoDBConfig = {
 const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
 
 // Route for logging events
-app.post('/log-event', upload.none(), async (req, res) => {
+app.post('/log-event', upload.single('file'), async (req, res) => {
   const { event } = req.body;
-  const file = req.file; // Adjusted to handle file uploads if needed
+  const file = req.file; // File will now be processed by multer
 
   // Add detailed logging
   console.log('Received event:', event);
   if (file) {
-    console.log('Received file:', file.name);
+    console.log('Received file:', file.originalname);
   } else {
     console.log('No file provided');
   }
@@ -66,8 +66,8 @@ app.post('/log-event', upload.none(), async (req, res) => {
     if (file) {
       const s3Params = {
         Bucket: 'my-daily-log-files',
-        Key: `${params.Item.id}-${file.name}`,
-        Body: Buffer.from(file.content, 'base64'),
+        Key: `${params.Item.id}-${file.originalname}`,
+        Body: file.buffer, // Use req.file.buffer for file content
       };
       console.log('Uploading file to S3:', s3Params);
       await s3.upload(s3Params).promise();
