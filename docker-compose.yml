@@ -3,7 +3,8 @@ services:
     build:
       context: ./backend
     ports:
-      - "3001:3001"    environment:
+      - "3001:3001"
+    environment:
       - AWS_REGION=us-east-1
       - DYNAMODB_ENDPOINT=http://dynamodb:8000
       - S3_ENDPOINT=http://localstack:4566
@@ -14,7 +15,8 @@ services:
     depends_on:
       - dynamodb
       - localstack
-    restart: on-failure    # Added command to ensure services are ready before starting the backend
+    restart: on-failure
+    # Command to ensure services are ready before starting the backend
     command: >
       sh -c "
         ./wait-for-it.sh localstack 4566 -- echo 'LocalStack is up' &&

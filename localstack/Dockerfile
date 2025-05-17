@@ -1,4 +1,4 @@
-FROM localstack/localstack:latest
+FROM localstack/localstack:2.3.0
 
 # Install AWS CLI and other required tools
 RUN apt-get update && \
