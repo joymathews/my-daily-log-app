@@ -7,10 +7,22 @@ services:
     environment:
       - AWS_REGION=us-east-1
       - DYNAMODB_ENDPOINT=http://dynamodb:8000
+      - S3_ENDPOINT=http://localstack:4566
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy
+      - S3_BUCKET_NAME=my-daily-log-files
     depends_on:
       - dynamodb
+      - localstack
+    restart: on-failure    # Added command to ensure services are ready before starting the backend
+    command: >
+      sh -c "
+        ./wait-for-it.sh localstack 4566 -- echo 'LocalStack is up' &&
+        ./wait-for-it.sh dynamodb 8000 -- echo 'DynamoDB is up' &&
+        sleep 5 &&
+        ./create-table.sh &&
+        node index.js
+      "
 
   frontend:
     build:
@@ -27,5 +39,23 @@ services:
     volumes:
       - dynamodb_data:/data
 
+  localstack:
+    build:
+      context: ./localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+      - DEBUG=1
+      - SKIP_DIRECTORY_CLEANUP=1
+      - LOCALSTACK_HOSTNAME=localstack
+      - TMPDIR=/tmp/localstack_tmp
+    volumes:
+      - localstack_data:/tmp/localstack_data
+
 volumes:
   dynamodb_data:
+  localstack_data:
