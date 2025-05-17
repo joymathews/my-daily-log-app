@@ -116,9 +116,7 @@ app.post('/log-event', upload.single('file'), async (req, res) => {
     await dynamoDB.put(params).promise();    // Upload file to S3 (if provided)
     if (file) {
       try {
-        // Ensure the bucket exists before uploading
-        await ensureBucketExists();
-        
+        // The bucket existence is already checked during server initialization
         const s3Params = {
           Bucket: S3_BUCKET_NAME,
           Key: `${params.Item.id}-${file.originalname}`,
