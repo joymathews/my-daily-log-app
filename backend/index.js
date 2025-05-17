@@ -32,8 +32,9 @@ const s3 = new AWS.S3({
   signatureVersion: 'v4'
 });
 
-// Define bucket name as constant
+// Define constants for resource names
 const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || 'my-daily-log-files';
+const DYNAMODB_TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'DailyLogEvents';
 
 // Function to ensure S3 bucket exists
 async function ensureBucketExists() {
@@ -102,10 +103,9 @@ app.post('/log-event', upload.single('file'), async (req, res) => {
     console.log('No file provided');
   }
 
-  try {
-    // Save event to DynamoDB
+  try {    // Save event to DynamoDB
     const params = {
-      TableName: 'DailyLogEvents',
+      TableName: DYNAMODB_TABLE_NAME,
       Item: {
         id: Date.now().toString(),
         event: event || 'No description provided',
@@ -146,7 +146,7 @@ app.post('/log-event', upload.single('file'), async (req, res) => {
 app.get('/view-events', async (req, res) => {
   try {
     const params = {
-      TableName: 'DailyLogEvents',
+      TableName: DYNAMODB_TABLE_NAME,
     };
     const data = await dynamoDB.scan(params).promise();
     res.status(200).json(data.Items);
@@ -177,10 +177,9 @@ app.get('/health', async (req, res) => {
         error: error.message
       };
     }
-    
-    // Check DynamoDB
+      // Check DynamoDB
     try {
-      const dynamoResult = await dynamoDB.scan({ TableName: 'DailyLogEvents', Limit: 1 }).promise();
+      const dynamoResult = await dynamoDB.scan({ TableName: DYNAMODB_TABLE_NAME, Limit: 1 }).promise();
       services.dynamodb = { 
         status: 'ok',
         itemCount: dynamoResult.Count
@@ -197,12 +196,12 @@ app.get('/health', async (req, res) => {
     
     res.status(overallStatus).json({
       status: overallStatus === 200 ? 'ok' : 'degraded',
-      services,
-      environment: {
+      services,      environment: {
         AWS_REGION: process.env.AWS_REGION || 'us-east-1',
         DYNAMODB_ENDPOINT: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
         S3_ENDPOINT: process.env.S3_ENDPOINT || 'http://localhost:4566',
-        S3_BUCKET_NAME
+        S3_BUCKET_NAME,
+        DYNAMODB_TABLE_NAME
       }
     });
   } catch (error) {
@@ -211,11 +210,11 @@ app.get('/health', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Backend server running on http://localhost:${port}`);
-  console.log(`Environment: 
+  console.log(`Backend server running on http://localhost:${port}`);  console.log(`Environment: 
     AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}
     DYNAMODB_ENDPOINT: ${process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'}
     S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}
     S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+    DYNAMODB_TABLE_NAME: ${DYNAMODB_TABLE_NAME}
   `);
 });

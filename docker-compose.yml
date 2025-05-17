@@ -3,14 +3,14 @@ services:
     build:
       context: ./backend
     ports:
-      - "3001:3001"
-    environment:
+      - "3001:3001"    environment:
       - AWS_REGION=us-east-1
       - DYNAMODB_ENDPOINT=http://dynamodb:8000
       - S3_ENDPOINT=http://localstack:4566
       - AWS_ACCESS_KEY_ID=dummy
       - AWS_SECRET_ACCESS_KEY=dummy
       - S3_BUCKET_NAME=my-daily-log-files
+      - DYNAMODB_TABLE_NAME=DailyLogEvents
     depends_on:
       - dynamodb
       - localstack

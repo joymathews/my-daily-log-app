@@ -3,7 +3,6 @@ set -e
 
 # Default timeout of 15 seconds
 TIMEOUT=15
-QUIET=0
 
 # Process command line arguments
 host="$1"
