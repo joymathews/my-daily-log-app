@@ -13,9 +13,13 @@ RUN apt-get update && \
 RUN mkdir -p /tmp/localstack_tmp /tmp/localstack_data && \
     chmod 777 /tmp/localstack_tmp /tmp/localstack_data
 
-# Copy initialization script and set execute permissions
+# Install dos2unix to convert Windows line endings to Unix
+RUN apt-get update && apt-get install -y dos2unix
+
+# Copy initialization script, convert line endings, and set execute permissions
 COPY init-aws.sh /docker-entrypoint-initaws.d/
-RUN chmod +x /docker-entrypoint-initaws.d/init-aws.sh
+RUN dos2unix /docker-entrypoint-initaws.d/init-aws.sh && \
+    chmod +x /docker-entrypoint-initaws.d/init-aws.sh
 
 # Ensure LocalStack directories exist and have proper permissions
 VOLUME ["/tmp/localstack_data", "/tmp/localstack_tmp"]
