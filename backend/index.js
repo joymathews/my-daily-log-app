@@ -24,7 +24,61 @@ AWS.config.update({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
   },
 });
-const s3 = new AWS.S3();
+
+// Configure S3 to use LocalStack
+const s3 = new AWS.S3({
+  endpoint: process.env.S3_ENDPOINT || 'http://localhost:4566',
+  s3ForcePathStyle: true,
+  signatureVersion: 'v4'
+});
+
+// Define constants for resource names
+const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || 'my-daily-log-files';
+const DYNAMODB_TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'DailyLogEvents';
+
+// Function to ensure S3 bucket exists
+async function ensureBucketExists() {
+  try {
+    console.log(`Checking if bucket ${S3_BUCKET_NAME} exists...`);
+    
+    // Try to get the bucket
+    try {
+      await s3.headBucket({ Bucket: S3_BUCKET_NAME }).promise();
+      console.log(`Bucket ${S3_BUCKET_NAME} exists.`);
+      return true; // Bucket exists
+    } catch (error) {
+      if (error.statusCode === 404) {
+        console.log(`Bucket ${S3_BUCKET_NAME} doesn't exist. Creating it...`);
+        
+        // Create the bucket
+        await s3.createBucket({ 
+          Bucket: S3_BUCKET_NAME 
+        }).promise();
+        
+        // Set public read access
+        await s3.putBucketAcl({
+          Bucket: S3_BUCKET_NAME,
+          ACL: 'public-read'
+        }).promise();
+        
+        console.log(`Bucket ${S3_BUCKET_NAME} created successfully.`);
+        return true;
+      } else {
+        console.error('Error checking bucket existence:', error);
+        return false;
+      }
+    }
+  } catch (error) {
+    console.error('Error ensuring bucket exists:', error);
+    return false;
+  }
+}
+
+// Call the function when the server starts
+ensureBucketExists().catch(err => {
+  console.error('Failed to initialize S3 bucket:', err);
+});
+
 const dynamoDBConfig = {
   region: process.env.AWS_REGION || 'us-east-1',
   endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
@@ -49,10 +103,9 @@ app.post('/log-event', upload.single('file'), async (req, res) => {
     console.log('No file provided');
   }
 
-  try {
-    // Save event to DynamoDB
+  try {    // Save event to DynamoDB
     const params = {
-      TableName: 'DailyLogEvents',
+      TableName: DYNAMODB_TABLE_NAME,
       Item: {
         id: Date.now().toString(),
         event: event || 'No description provided',
@@ -60,17 +113,24 @@ app.post('/log-event', upload.single('file'), async (req, res) => {
       },
     };
     console.log('Saving event to DynamoDB:', params);
-    await dynamoDB.put(params).promise();
-
-    // Upload file to S3 (if provided)
+    await dynamoDB.put(params).promise();    // Upload file to S3 (if provided)
     if (file) {
-      const s3Params = {
-        Bucket: 'my-daily-log-files',
-        Key: `${params.Item.id}-${file.originalname}`,
-        Body: file.buffer, // Use req.file.buffer for file content
-      };
-      console.log('Uploading file to S3:', s3Params);
-      await s3.upload(s3Params).promise();
+      try {
+        // The bucket existence is already checked during server initialization
+        const s3Params = {
+          Bucket: S3_BUCKET_NAME,
+          Key: `${params.Item.id}-${file.originalname}`,
+          Body: file.buffer,
+          ContentType: file.mimetype
+        };
+        
+        console.log('Uploading file to S3:', s3Params);
+        const uploadResult = await s3.upload(s3Params).promise();
+        console.log('File uploaded successfully:', uploadResult.Location);
+      } catch (uploadError) {
+        console.error('Error uploading file to S3:', uploadError);
+        throw new Error(`File upload failed: ${uploadError.message}`);
+      }
     }
 
     res.status(200).send('Event logged successfully');
@@ -84,7 +144,7 @@ app.post('/log-event', upload.single('file'), async (req, res) => {
 app.get('/view-events', async (req, res) => {
   try {
     const params = {
-      TableName: 'DailyLogEvents',
+      TableName: DYNAMODB_TABLE_NAME,
     };
     const data = await dynamoDB.scan(params).promise();
     res.status(200).json(data.Items);
@@ -94,6 +154,65 @@ app.get('/view-events', async (req, res) => {
   }
 });
 
+// Health check endpoint that verifies S3 and DynamoDB connections
+app.get('/health', async (req, res) => {
+  try {
+    const services = {
+      s3: { status: 'unknown' },
+      dynamodb: { status: 'unknown' }
+    };
+    
+    // Check S3
+    try {
+      const s3Result = await s3.listBuckets().promise();
+      services.s3 = { 
+        status: 'ok',
+        buckets: s3Result.Buckets.map(b => b.Name)
+      };
+    } catch (error) {
+      services.s3 = { 
+        status: 'error',
+        error: error.message
+      };
+    }
+      // Check DynamoDB
+    try {
+      const dynamoResult = await dynamoDB.scan({ TableName: DYNAMODB_TABLE_NAME, Limit: 1 }).promise();
+      services.dynamodb = { 
+        status: 'ok',
+        itemCount: dynamoResult.Count
+      };
+    } catch (error) {
+      services.dynamodb = { 
+        status: 'error',
+        error: error.message
+      };
+    }
+    
+    // Overall status
+    const overallStatus = Object.values(services).every(s => s.status === 'ok') ? 200 : 503;
+    
+    res.status(overallStatus).json({
+      status: overallStatus === 200 ? 'ok' : 'degraded',
+      services,      environment: {
+        AWS_REGION: process.env.AWS_REGION || 'us-east-1',
+        DYNAMODB_ENDPOINT: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
+        S3_ENDPOINT: process.env.S3_ENDPOINT || 'http://localhost:4566',
+        S3_BUCKET_NAME,
+        DYNAMODB_TABLE_NAME
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ status: 'error', error: error.message });
+  }
+});
+
 app.listen(port, () => {
-  console.log(`Backend server running on http://localhost:${port}`);
+  console.log(`Backend server running on http://localhost:${port}`);  console.log(`Environment: 
+    AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}
+    DYNAMODB_ENDPOINT: ${process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'}
+    S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}
+    S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+    DYNAMODB_TABLE_NAME: ${DYNAMODB_TABLE_NAME}
+  `);
 });
