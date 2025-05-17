@@ -1,8 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import LogEvent from './pages/LogEvent';
-import ViewEvents from './pages/ViewEvents';
+import Home from './pages/Home.jsx';
+import LogEvent from './pages/LogEvent.jsx';
+import ViewEvents from './pages/ViewEvents.jsx';
 
 function App() {
   return (
