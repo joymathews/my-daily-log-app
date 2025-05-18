@@ -68,13 +68,19 @@ jest.mock('multer', () => {
 
 const request = require('supertest');
 const AWS = require('aws-sdk');
-const app = require('../index');
+const createApp = require('../index');
 
 // Mock console methods
 console.log = jest.fn();
 console.error = jest.fn();
 
 describe('API Unit Tests (using real app)', () => {
+  let app;
+
+  beforeEach(() => {
+    app = createApp({ AWSLib: AWS, multerLib: require('multer') });
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -118,6 +124,7 @@ describe('API Unit Tests (using real app)', () => {
         promise: jest.fn().mockResolvedValue({ Items: [], Count: 0 })
       })
     }));
+    app = createApp({ AWSLib: AWS, multerLib: require('multer') });
     const response = await request(app).get('/view-events');
     expect(response.status).toBe(200);
     expect(response.body).toEqual([]);
@@ -129,6 +136,7 @@ describe('API Unit Tests (using real app)', () => {
         promise: jest.fn().mockRejectedValue(new Error('DynamoDB failure'))
       })
     }));
+    app = createApp({ AWSLib: AWS, multerLib: require('multer') });
     const response = await request(app).get('/view-events');
     expect(response.status).toBe(500);
     expect(response.text).toBe('Error fetching events');

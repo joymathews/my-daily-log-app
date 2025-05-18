@@ -90,125 +90,160 @@ const dynamoDBConfig = {
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
 
-// Route for logging events
-app.post('/log-event', upload.single('file'), async (req, res) => {
-  const { event } = req.body;
-  const file = req.file; // File will now be processed by multer
+// Accept AWS and multer as injectable dependencies for testability
+function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
+  const app = express();
+  app.use(bodyParser.json());
+  app.use(cors());
+  const upload = multerLib();
 
-  // Add detailed logging
-  console.log('Received event:', event);
-  if (file) {
-    console.log('Received file:', file.originalname);
-  } else {
-    console.log('No file provided');
-  }
+  // AWS Configuration
+  AWSLib.config.update({
+    region: process.env.AWS_REGION || 'us-east-1',
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
+    },
+  });
 
-  try {    // Save event to DynamoDB
-    const params = {
-      TableName: DYNAMODB_TABLE_NAME,
-      Item: {
-        id: Date.now().toString(),
-        event: event || 'No description provided',
-        timestamp: new Date().toISOString(),
-      },
-    };
-    console.log('Saving event to DynamoDB:', params);
-    await dynamoDB.put(params).promise();    // Upload file to S3 (if provided)
+  const s3 = new AWSLib.S3({
+    endpoint: process.env.S3_ENDPOINT || 'http://localhost:4566',
+    s3ForcePathStyle: true,
+    signatureVersion: 'v4',
+  });
+  const dynamoDBConfig = {
+    region: process.env.AWS_REGION || 'us-east-1',
+    endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
+    },
+  };
+  const dynamoDB = new AWSLib.DynamoDB.DocumentClient(dynamoDBConfig);
+
+  // Route for logging events
+  app.post('/log-event', upload.single('file'), async (req, res) => {
+    const { event } = req.body;
+    const file = req.file; // File will now be processed by multer
+
+    // Add detailed logging
+    console.log('Received event:', event);
     if (file) {
+      console.log('Received file:', file.originalname);
+    } else {
+      console.log('No file provided');
+    }
+
+    try {    // Save event to DynamoDB
+      const params = {
+        TableName: DYNAMODB_TABLE_NAME,
+        Item: {
+          id: Date.now().toString(),
+          event: event || 'No description provided',
+          timestamp: new Date().toISOString(),
+        },
+      };
+      console.log('Saving event to DynamoDB:', params);
+      await dynamoDB.put(params).promise();    // Upload file to S3 (if provided)
+      if (file) {
+        try {
+          // The bucket existence is already checked during server initialization
+          const s3Params = {
+            Bucket: S3_BUCKET_NAME,
+            Key: `${params.Item.id}-${file.originalname}`,
+            Body: file.buffer,
+            ContentType: file.mimetype
+          };
+          
+          console.log('Uploading file to S3:', s3Params);
+          const uploadResult = await s3.upload(s3Params).promise();
+          console.log('File uploaded successfully:', uploadResult.Location);
+        } catch (uploadError) {
+          console.error('Error uploading file to S3:', uploadError);
+          throw new Error(`File upload failed: ${uploadError.message}`);
+        }
+      }
+
+      res.status(200).send('Event logged successfully');
+    } catch (error) {
+      console.error('Error logging event:', error);
+      res.status(500).send('Error logging event');
+    }
+  });
+
+  // Route for viewing events
+  app.get('/view-events', async (req, res) => {
+    try {
+      const params = {
+        TableName: DYNAMODB_TABLE_NAME,
+      };
+      const data = await dynamoDB.scan(params).promise();
+      res.status(200).json(data.Items);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      res.status(500).send('Error fetching events');
+    }
+  });
+
+  // Health check endpoint that verifies S3 and DynamoDB connections
+  app.get('/health', async (req, res) => {
+    try {
+      const services = {
+        s3: { status: 'unknown' },
+        dynamodb: { status: 'unknown' }
+      };
+      
+      // Check S3
       try {
-        // The bucket existence is already checked during server initialization
-        const s3Params = {
-          Bucket: S3_BUCKET_NAME,
-          Key: `${params.Item.id}-${file.originalname}`,
-          Body: file.buffer,
-          ContentType: file.mimetype
+        const s3Result = await s3.listBuckets().promise();
+        services.s3 = { 
+          status: 'ok',
+          buckets: s3Result.Buckets.map(b => b.Name)
         };
-        
-        console.log('Uploading file to S3:', s3Params);
-        const uploadResult = await s3.upload(s3Params).promise();
-        console.log('File uploaded successfully:', uploadResult.Location);
-      } catch (uploadError) {
-        console.error('Error uploading file to S3:', uploadError);
-        throw new Error(`File upload failed: ${uploadError.message}`);
+      } catch (error) {
+        services.s3 = { 
+          status: 'error',
+          error: error.message
+        };
       }
-    }
-
-    res.status(200).send('Event logged successfully');
-  } catch (error) {
-    console.error('Error logging event:', error);
-    res.status(500).send('Error logging event');
-  }
-});
-
-// Route for viewing events
-app.get('/view-events', async (req, res) => {
-  try {
-    const params = {
-      TableName: DYNAMODB_TABLE_NAME,
-    };
-    const data = await dynamoDB.scan(params).promise();
-    res.status(200).json(data.Items);
-  } catch (error) {
-    console.error('Error fetching events:', error);
-    res.status(500).send('Error fetching events');
-  }
-});
-
-// Health check endpoint that verifies S3 and DynamoDB connections
-app.get('/health', async (req, res) => {
-  try {
-    const services = {
-      s3: { status: 'unknown' },
-      dynamodb: { status: 'unknown' }
-    };
-    
-    // Check S3
-    try {
-      const s3Result = await s3.listBuckets().promise();
-      services.s3 = { 
-        status: 'ok',
-        buckets: s3Result.Buckets.map(b => b.Name)
-      };
-    } catch (error) {
-      services.s3 = { 
-        status: 'error',
-        error: error.message
-      };
-    }
-      // Check DynamoDB
-    try {
-      const dynamoResult = await dynamoDB.scan({ TableName: DYNAMODB_TABLE_NAME, Limit: 1 }).promise();
-      services.dynamodb = { 
-        status: 'ok',
-        itemCount: dynamoResult.Count
-      };
-    } catch (error) {
-      services.dynamodb = { 
-        status: 'error',
-        error: error.message
-      };
-    }
-    
-    // Overall status
-    const overallStatus = Object.values(services).every(s => s.status === 'ok') ? 200 : 503;
-    
-    res.status(overallStatus).json({
-      status: overallStatus === 200 ? 'ok' : 'degraded',
-      services,      environment: {
-        AWS_REGION: process.env.AWS_REGION || 'us-east-1',
-        DYNAMODB_ENDPOINT: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
-        S3_ENDPOINT: process.env.S3_ENDPOINT || 'http://localhost:4566',
-        S3_BUCKET_NAME,
-        DYNAMODB_TABLE_NAME
+        // Check DynamoDB
+      try {
+        const dynamoResult = await dynamoDB.scan({ TableName: DYNAMODB_TABLE_NAME, Limit: 1 }).promise();
+        services.dynamodb = { 
+          status: 'ok',
+          itemCount: dynamoResult.Count
+        };
+      } catch (error) {
+        services.dynamodb = { 
+          status: 'error',
+          error: error.message
+        };
       }
-    });
-  } catch (error) {
-    res.status(500).json({ status: 'error', error: error.message });
-  }
-});
+      
+      // Overall status
+      const overallStatus = Object.values(services).every(s => s.status === 'ok') ? 200 : 503;
+      
+      res.status(overallStatus).json({
+        status: overallStatus === 200 ? 'ok' : 'degraded',
+        services,      environment: {
+          AWS_REGION: process.env.AWS_REGION || 'us-east-1',
+          DYNAMODB_ENDPOINT: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
+          S3_ENDPOINT: process.env.S3_ENDPOINT || 'http://localhost:4566',
+          S3_BUCKET_NAME,
+          DYNAMODB_TABLE_NAME
+        }
+      });
+    } catch (error) {
+      res.status(500).json({ status: 'error', error: error.message });
+    }
+  });
+
+  return app;
+}
 
 // Only start the server if this file is run directly
 if (require.main === module) {
+  const app = createApp();
   app.listen(port, () => {
     console.log(`Backend server running on http://localhost:${port}`);
     console.log(`Environment: 
@@ -222,4 +257,4 @@ if (require.main === module) {
 }
 
 // Export for testing
-module.exports = app;
+module.exports = createApp;
