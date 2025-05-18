@@ -8,7 +8,10 @@ module.exports = {
       lines: 72,
       statements: 72
     }
-  },  testMatch: ['**/__tests__/{server,integration,view-events,basic}.test.js'],
+  },  testMatch: [
+    "**/__tests__/*.test.js",
+    "**/__tests__/*.unit.test.js"
+  ],
   testPathIgnorePatterns: ['/node_modules/', '/__tests__/utils/'],
   collectCoverageFrom: [
     'index.js',
