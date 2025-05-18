@@ -42,6 +42,7 @@ function LogEvent() {
         />
         <input
           type="file"
+          data-testid="file-input"
           onChange={(e) => setFile(e.target.files[0])}
         />
         <button type="submit">Submit</button>
