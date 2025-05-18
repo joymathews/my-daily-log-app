@@ -207,12 +207,19 @@ app.get('/health', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Backend server running on http://localhost:${port}`);  console.log(`Environment: 
-    AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}
-    DYNAMODB_ENDPOINT: ${process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'}
-    S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}
-    S3_BUCKET_NAME: ${S3_BUCKET_NAME}
-    DYNAMODB_TABLE_NAME: ${DYNAMODB_TABLE_NAME}
-  `);
-});
+// Only start the server if this file is run directly
+if (require.main === module) {
+  app.listen(port, () => {
+    console.log(`Backend server running on http://localhost:${port}`);
+    console.log(`Environment: 
+      AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}
+      DYNAMODB_ENDPOINT: ${process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'}
+      S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      DYNAMODB_TABLE_NAME: ${DYNAMODB_TABLE_NAME}
+    `);
+  });
+}
+
+// Export for testing
+module.exports = app;
