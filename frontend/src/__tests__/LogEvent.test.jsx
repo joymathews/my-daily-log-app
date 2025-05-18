@@ -35,9 +35,8 @@ it('shows error message on failed submit', async () => {
 it('handles file input change', () => {
   render(<LogEvent />);
   const file = new File(['dummy content'], 'example.txt', { type: 'text/plain' });
-  const input = screen.getByRole('textbox', { hidden: true }) || screen.getByRole('input', { type: 'file' });
-  // fallback: querySelector if needed
-  // const input = document.querySelector('input[type="file"]');
-  input.files = [file];
+  const input = screen.getByTestId('file-input');
+  // Simulate file selection
+  fireEvent.change(input, { target: { files: [file] } });
   expect(input.files[0]).toBe(file);
 });
