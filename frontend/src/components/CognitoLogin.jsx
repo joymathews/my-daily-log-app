@@ -1,11 +1,38 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
+// Helper to sanitize error messages (basic)
+function sanitize(str) {
+  if (!str) return '';
+  return String(str).replace(/[<>]/g, '');
+}
+
 function CognitoLogin({ onLogin }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+
+  // Check if token is expired (simple check for exp in JWT)
+  function isTokenExpired(token) {
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp * 1000 < Date.now();
+    } catch {
+      return true;
+    }
+  }
+
+  // On mount, check for expired session and clear if needed
+  React.useEffect(() => {
+    const idToken = localStorage.getItem('cognito_id_token');
+    if (idToken && isTokenExpired(idToken)) {
+      localStorage.removeItem('cognito_id_token');
+      localStorage.removeItem('cognito_access_token');
+      localStorage.removeItem('cognito_refresh_token');
+    }
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -28,7 +55,7 @@ function CognitoLogin({ onLogin }) {
           navigate('/'); // Redirect to home after login
         },
         onFailure: (err) => {
-          setMessage('Login failed: ' + err.message);
+          setMessage('Login failed: ' + sanitize(err.message));
         }
       });
     });
