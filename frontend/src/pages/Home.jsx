@@ -10,6 +10,11 @@ function Home() {
           <li><Link to="/log">Log an Event</Link></li>
           <li><Link to="/view">View Events</Link></li>
         </ul>
+        <ul>
+          <li><Link to="/login">Login</Link></li>
+          <li><Link to="/register">Register</Link></li>
+          <li><Link to="/verify">Verify</Link></li>
+        </ul>
       </nav>
     </div>
   );
