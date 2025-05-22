@@ -1,7 +1,17 @@
+// Mock env config
+jest.mock('../config/env', () => ({
+  VITE_COGNITO_USER_POOL_ID: 'test-pool',
+  VITE_COGNITO_USER_POOL_WEB_CLIENT_ID: 'test-client',
+}));
+
+// Mock CognitoUserPool as a jest mock function
+jest.mock('amazon-cognito-identity-js', () => ({
+  CognitoUserPool: jest.fn(),
+}));
+
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-jest.mock('../config/env');
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
 import AppWithRouter from '../App';
 

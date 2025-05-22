@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import Home from '../pages/Home';
 
-// Test that Home page renders welcome message
+// This test checks that when a user visits the home page, they see a welcome message so they know they are in the right place.
 it('renders welcome message', () => {
   render(
     <MemoryRouter>
@@ -14,7 +14,7 @@ it('renders welcome message', () => {
   expect(screen.getByText(/Welcome to My Daily Log/i)).toBeInTheDocument();
 });
 
-// Test that Home page has navigation links
+// This test checks that the home page shows links to log a new event or view past events, so users can easily navigate.
 it('renders navigation links', () => {
   render(
     <MemoryRouter>

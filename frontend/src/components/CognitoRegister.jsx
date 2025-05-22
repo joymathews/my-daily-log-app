@@ -6,13 +6,15 @@ const poolData = {
   UserPoolId: env.VITE_COGNITO_USER_POOL_ID,
   ClientId: env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID
 };
-const userPool = new CognitoUserPool(poolData);
 
 function CognitoRegister() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [message, setMessage] = useState('');
+
+  // Move userPool instantiation here so tests can mock it
+  const userPool = new CognitoUserPool(poolData);
 
   const handleSubmit = (e) => {
     e.preventDefault();

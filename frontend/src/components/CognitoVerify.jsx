@@ -6,12 +6,14 @@ const poolData = {
   UserPoolId: env.VITE_COGNITO_USER_POOL_ID,
   ClientId: env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID
 };
-const userPool = new CognitoUserPool(poolData);
 
 function CognitoVerify() {
   const [username, setUsername] = useState('');
   const [code, setCode] = useState('');
   const [message, setMessage] = useState('');
+
+  // Move userPool instantiation here so tests can mock it
+  const userPool = new CognitoUserPool(poolData);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -28,7 +30,7 @@ function CognitoVerify() {
   return (
     <div>
       <h2>Verify Account</h2>
-      <form onSubmit={handleSubmit}>
+      <form role="form" onSubmit={handleSubmit}>
         <input
           type="text"
           placeholder="Username"

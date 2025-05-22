@@ -5,9 +5,15 @@ function LogEvent() {
   const [event, setEvent] = useState('');
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
+  const [validationError, setValidationError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setValidationError('');
+    if (!event && !file) {
+      setValidationError('Please enter an event description or select a file.');
+      return;
+    }
     const formData = new FormData();
     formData.append('event', event);
     if (file) {
@@ -22,6 +28,12 @@ function LogEvent() {
       });
       if (response.status === 200) {
         setMessage(response.data);
+        setEvent('');
+        setFile(null);
+        // Reset file input value
+        if (document.querySelector('[data-testid="file-input"]')) {
+          document.querySelector('[data-testid="file-input"]').value = '';
+        }
       } else {
         setMessage('Unexpected response from server');
       }
@@ -47,6 +59,7 @@ function LogEvent() {
         />
         <button type="submit">Submit</button>
       </form>
+      {validationError && <p style={{ color: 'red' }}>{validationError}</p>}
       {message && <p>{message}</p>}
     </div>
   );
