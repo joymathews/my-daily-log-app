@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
+import env from '../config/env';
 
 const poolData = {
-  UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
-  ClientId: import.meta.env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID
+  UserPoolId: env.VITE_COGNITO_USER_POOL_ID,
+  ClientId: env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID
 };
 const userPool = new CognitoUserPool(poolData);
 

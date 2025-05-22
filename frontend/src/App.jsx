@@ -7,14 +7,19 @@ import CognitoLogin from './components/CognitoLogin.jsx';
 import CognitoRegister from './components/CognitoRegister.jsx';
 import CognitoVerify from './components/CognitoVerify.jsx';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
+import env from './config/env';
 
-const poolData = {
-  UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
-  ClientId: import.meta.env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID
-};
-const userPool = new CognitoUserPool(poolData);
+// Utility to get CognitoUserPool instance
+function getUserPool() {
+  const poolData = {
+    UserPoolId: env.VITE_COGNITO_USER_POOL_ID,
+    ClientId: env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID
+  };
+  return new CognitoUserPool(poolData);
+}
 
 function ProtectedRoute({ children }) {
+  const userPool = getUserPool();
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   useEffect(() => {
     const user = userPool.getCurrentUser();
@@ -46,6 +51,7 @@ function ViewEventsWithHeader({ onSignOut }) {
 }
 
 function App() {
+  const userPool = getUserPool();
   const [isAuthenticated, setIsAuthenticated] = useState(!!userPool.getCurrentUser());
   const navigate = useNavigate();
 

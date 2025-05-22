@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import env from '../config/env';
 
 // Helper to sanitize error messages (basic)
 function sanitize(str) {
@@ -38,8 +39,8 @@ function CognitoLogin({ onLogin }) {
     e.preventDefault();
     import('amazon-cognito-identity-js').then(({ CognitoUserPool, CognitoUser, AuthenticationDetails }) => {
       const poolData = {
-        UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
-        ClientId: import.meta.env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID
+        UserPoolId: env.VITE_COGNITO_USER_POOL_ID,
+        ClientId: env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID
       };
       const userPool = new CognitoUserPool(poolData);
       const user = new CognitoUser({ Username: username, Pool: userPool });
