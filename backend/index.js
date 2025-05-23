@@ -180,6 +180,15 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
     jwksUri: `${COGNITO_ISSUER}/.well-known/jwks.json`
   });
 
+  // Helper function to get the signing key for JWT verification
+  function getKey(header, callback) {
+    client.getSigningKey(header.kid, function (err, key) {
+      if (err) return callback(err);
+      const signingKey = key.getPublicKey();
+      callback(null, signingKey);
+    });
+  }
+
   function authenticateJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -193,14 +202,6 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
       req.user = decoded;
       next();
     });
-
-    function getKey(header, callback) {
-      client.getSigningKey(header.kid, function (err, key) {
-        if (err) return callback(err);
-        const signingKey = key.getPublicKey();
-        callback(null, signingKey);
-      });
-    }
   }
 
   // Route for logging events (add authenticateJWT)
