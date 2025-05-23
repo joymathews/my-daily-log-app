@@ -133,8 +133,8 @@ if (require.main === module) {
     console.error('Failed to initialize DynamoDB table:', err);
   });
 
-  const app = createApp();
-  app.listen(port, () => {
+  const appInstance = createApp();
+  appInstance.listen(port, () => {
     console.log(`Backend server running on http://localhost:${port}`);
     console.log(`Environment: \
       AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}\n      DYNAMODB_ENDPOINT: ${process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'}\n      S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}\n      S3_BUCKET_NAME: ${S3_BUCKET_NAME}\n      DYNAMODB_TABLE_NAME: ${DYNAMODB_TABLE_NAME}\n    `);
@@ -328,25 +328,6 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
   });
 
   return app;
-}
-
-// Only start the server if this file is run directly
-if (require.main === module) {
-  // Call the function when the server starts
-  ensureBucketExists().catch(err => {
-    console.error('Failed to initialize S3 bucket:', err);
-  });
-
-  ensureTableExists().catch(err => {
-    console.error('Failed to initialize DynamoDB table:', err);
-  });
-
-  const app = createApp();
-  app.listen(port, () => {
-    console.log(`Backend server running on http://localhost:${port}`);
-    console.log(`Environment: \
-      AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}\n      DYNAMODB_ENDPOINT: ${process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'}\n      S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}\n      S3_BUCKET_NAME: ${S3_BUCKET_NAME}\n      DYNAMODB_TABLE_NAME: ${DYNAMODB_TABLE_NAME}\n    `);
-  });
 }
 
 // Export for testing
