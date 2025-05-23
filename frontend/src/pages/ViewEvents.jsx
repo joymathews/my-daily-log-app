@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import env from '../config/env';
 
 function ViewEvents() {
   const [events, setEvents] = useState([]);
@@ -7,7 +8,12 @@ function ViewEvents() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/view-events');
+        const token = localStorage.getItem('cognito_id_token');
+        const response = await axios.get(`${env.VITE_API_BASE_URL}/view-events`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         setEvents(response.data);
       } catch (error) {
         console.error('Error fetching events:', error);

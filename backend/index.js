@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
 const multer = require('multer');
 const cors = require('cors'); // Import CORS
-
+const jwksClient = require('jwks-rsa');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const port = 3001;
@@ -35,6 +36,17 @@ const s3 = new AWS.S3({
 // Define constants for resource names
 const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || 'my-daily-log-files';
 const DYNAMODB_TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'DailyLogEvents';
+
+// DynamoDB client config and initialization (move this up before ensureTableExists)
+const dynamoDBConfig = {
+  region: process.env.AWS_REGION || 'us-east-1',
+  endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
+  },
+};
+const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
 
 // Function to ensure S3 bucket exists
 async function ensureBucketExists() {
@@ -74,21 +86,60 @@ async function ensureBucketExists() {
   }
 }
 
-// Call the function when the server starts
-ensureBucketExists().catch(err => {
-  console.error('Failed to initialize S3 bucket:', err);
-});
+// Function to ensure DynamoDB table exists
+async function ensureTableExists() {
+  const params = {
+    TableName: DYNAMODB_TABLE_NAME,
+    KeySchema: [
+      { AttributeName: 'id', KeyType: 'HASH' }, // Partition key
+    ],
+    AttributeDefinitions: [
+      { AttributeName: 'id', AttributeType: 'S' },
+    ],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 5,
+      WriteCapacityUnits: 5,
+    },
+  };
+  // Note: dynamoDB.service is used here to access the underlying AWS.DynamoDB service client, which provides methods like listTables and createTable not available on the DocumentClient. This is necessary for table management operations.
+  try {
+    console.log(`Checking if DynamoDB table ${DYNAMODB_TABLE_NAME} exists...`);
+    const tables = await dynamoDB.service.listTables().promise();
+    if (tables.TableNames.includes(DYNAMODB_TABLE_NAME)) {
+      console.log(`Table ${DYNAMODB_TABLE_NAME} exists.`);
+      return true;
+    } else {
+      console.log(`Table ${DYNAMODB_TABLE_NAME} doesn't exist. Creating it...`);
+      await dynamoDB.service.createTable(params).promise();
+      // Wait for table to become active
+      await dynamoDB.service.waitFor('tableExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
+      console.log(`Table ${DYNAMODB_TABLE_NAME} created successfully.`);
+      return true;
+    }
+  } catch (error) {
+    console.error('Error ensuring DynamoDB table exists:', error);
+    return false;
+  }
+}
 
-const dynamoDBConfig = {
-  region: process.env.AWS_REGION || 'us-east-1',
-  endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
-  },
-};
+// Only start the server and initialize resources if this file is run directly
+if (require.main === module) {
+  // Call the function when the server starts
+  ensureBucketExists().catch(err => {
+    console.error('Failed to initialize S3 bucket:', err);
+  });
 
-const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
+  ensureTableExists().catch(err => {
+    console.error('Failed to initialize DynamoDB table:', err);
+  });
+
+  const app = createApp();
+  app.listen(port, () => {
+    console.log(`Backend server running on http://localhost:${port}`);
+    console.log(`Environment: \
+      AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}\n      DYNAMODB_ENDPOINT: ${process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'}\n      S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}\n      S3_BUCKET_NAME: ${S3_BUCKET_NAME}\n      DYNAMODB_TABLE_NAME: ${DYNAMODB_TABLE_NAME}\n    `);
+  });
+}
 
 // Accept AWS and multer as injectable dependencies for testability
 function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
@@ -121,10 +172,44 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
   };
   const dynamoDB = new AWSLib.DynamoDB.DocumentClient(dynamoDBConfig);
 
-  // Route for logging events
-  app.post('/log-event', upload.single('file'), async (req, res) => {
+  // Cognito config for backend verification
+  const COGNITO_REGION = process.env.COGNITO_REGION || process.env.AWS_REGION || 'us-east-1';
+  const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID;
+  const COGNITO_ISSUER = `https://cognito-idp.${COGNITO_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}`;
+
+  const client = jwksClient({
+    jwksUri: `${COGNITO_ISSUER}/.well-known/jwks.json`
+  });
+
+  // Helper function to get the signing key for JWT verification
+  function getKey(header, callback) {
+    client.getSigningKey(header.kid, function (err, key) {
+      if (err) return callback(err);
+      const signingKey = key.getPublicKey();
+      callback(null, signingKey);
+    });
+  }
+
+  function authenticateJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).send('Missing or invalid Authorization header');
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, getKey, { issuer: COGNITO_ISSUER }, (err, decoded) => {
+      if (err) {
+        return res.status(401).send('Invalid token');
+      }
+      req.user = decoded;
+      next();
+    });
+  }
+
+  // Route for logging events (add authenticateJWT)
+  app.post('/log-event', authenticateJWT, upload.single('file'), async (req, res) => {
     const { event } = req.body;
     const file = req.file; // File will now be processed by multer
+    const userSub = req.user.sub; // Cognito user unique id
 
     // Add detailed logging
     console.log('Received event:', event);
@@ -141,6 +226,7 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
           id: Date.now().toString(),
           event: event || 'No description provided',
           timestamp: new Date().toISOString(),
+          userSub // Store user identity
         },
       };
       console.log('Saving event to DynamoDB:', params);
@@ -171,11 +257,14 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
     }
   });
 
-  // Route for viewing events
-  app.get('/view-events', async (req, res) => {
+  // Route for viewing events (add authenticateJWT)
+  app.get('/view-events', authenticateJWT, async (req, res) => {
+    const userSub = req.user.sub;
     try {
       const params = {
         TableName: DYNAMODB_TABLE_NAME,
+        FilterExpression: 'userSub = :userSub',
+        ExpressionAttributeValues: { ':userSub': userSub }
       };
       const data = await dynamoDB.scan(params).promise();
       res.status(200).json(data.Items);
@@ -243,16 +332,20 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
 
 // Only start the server if this file is run directly
 if (require.main === module) {
+  // Call the function when the server starts
+  ensureBucketExists().catch(err => {
+    console.error('Failed to initialize S3 bucket:', err);
+  });
+
+  ensureTableExists().catch(err => {
+    console.error('Failed to initialize DynamoDB table:', err);
+  });
+
   const app = createApp();
   app.listen(port, () => {
     console.log(`Backend server running on http://localhost:${port}`);
-    console.log(`Environment: 
-      AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}
-      DYNAMODB_ENDPOINT: ${process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'}
-      S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}
-      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
-      DYNAMODB_TABLE_NAME: ${DYNAMODB_TABLE_NAME}
-    `);
+    console.log(`Environment: \
+      AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}\n      DYNAMODB_ENDPOINT: ${process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'}\n      S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}\n      S3_BUCKET_NAME: ${S3_BUCKET_NAME}\n      DYNAMODB_TABLE_NAME: ${DYNAMODB_TABLE_NAME}\n    `);
   });
 }
 
