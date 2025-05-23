@@ -36,6 +36,17 @@ const s3 = new AWS.S3({
 const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || 'my-daily-log-files';
 const DYNAMODB_TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'DailyLogEvents';
 
+// DynamoDB client config and initialization (move this up before ensureTableExists)
+const dynamoDBConfig = {
+  region: process.env.AWS_REGION || 'us-east-1',
+  endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
+  },
+};
+const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
+
 // Function to ensure S3 bucket exists
 async function ensureBucketExists() {
   try {
@@ -74,21 +85,49 @@ async function ensureBucketExists() {
   }
 }
 
+// Function to ensure DynamoDB table exists
+async function ensureTableExists() {
+  const params = {
+    TableName: DYNAMODB_TABLE_NAME,
+    KeySchema: [
+      { AttributeName: 'id', KeyType: 'HASH' }, // Partition key
+    ],
+    AttributeDefinitions: [
+      { AttributeName: 'id', AttributeType: 'S' },
+    ],
+    ProvisionedThroughput: {
+      ReadCapacityUnits: 5,
+      WriteCapacityUnits: 5,
+    },
+  };
+  try {
+    console.log(`Checking if DynamoDB table ${DYNAMODB_TABLE_NAME} exists...`);
+    const tables = await dynamoDB.service.listTables().promise();
+    if (tables.TableNames.includes(DYNAMODB_TABLE_NAME)) {
+      console.log(`Table ${DYNAMODB_TABLE_NAME} exists.`);
+      return true;
+    } else {
+      console.log(`Table ${DYNAMODB_TABLE_NAME} doesn't exist. Creating it...`);
+      await dynamoDB.service.createTable(params).promise();
+      // Wait for table to become active
+      await dynamoDB.service.waitFor('tableExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
+      console.log(`Table ${DYNAMODB_TABLE_NAME} created successfully.`);
+      return true;
+    }
+  } catch (error) {
+    console.error('Error ensuring DynamoDB table exists:', error);
+    return false;
+  }
+}
+
 // Call the function when the server starts
 ensureBucketExists().catch(err => {
   console.error('Failed to initialize S3 bucket:', err);
 });
 
-const dynamoDBConfig = {
-  region: process.env.AWS_REGION || 'us-east-1',
-  endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
-  },
-};
-
-const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
+ensureTableExists().catch(err => {
+  console.error('Failed to initialize DynamoDB table:', err);
+});
 
 // Accept AWS and multer as injectable dependencies for testability
 function createApp({ AWSLib = AWS, multerLib = multer } = {}) {

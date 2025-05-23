@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import env from '../config/env';
 
 function LogEvent() {
   const [event, setEvent] = useState('');
@@ -21,7 +22,7 @@ function LogEvent() {
     }
 
     try {
-      const response = await axios.post('http://localhost:3001/log-event', formData, {
+      const response = await axios.post(`${env.VITE_API_BASE_URL}/log-event`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
