@@ -31,19 +31,6 @@
     "preview": "vite preview",
     "test": "jest --coverage"
   },
-  "jest": {
-    "testEnvironment": "jsdom",
-    "transform": {
-      "^.+\\.(js|jsx)$": "babel-jest"
-    },
-    "setupFilesAfterEnv": [
-      "<rootDir>/src/setupTests.js"
-    ],
-    "moduleNameMapper": {
-      "^react$": "<rootDir>/node_modules/react",
-      "^react-dom$": "<rootDir>/node_modules/react-dom"
-    }
-  },
   "browserslist": {
     "production": [
       ">0.2%",
