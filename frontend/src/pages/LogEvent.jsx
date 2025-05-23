@@ -22,9 +22,11 @@ function LogEvent() {
     }
 
     try {
+      const token = localStorage.getItem('cognito_id_token');
       const response = await axios.post(`${env.VITE_API_BASE_URL}/log-event`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
         },
       });
       if (response.status === 200) {

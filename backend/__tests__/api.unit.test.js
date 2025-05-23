@@ -66,6 +66,14 @@ jest.mock('multer', () => {
   });
 });
 
+// Mock JWT verification middleware for tests
+jest.mock('jsonwebtoken', () => ({
+  verify: (token, getKey, options, callback) => {
+    // Always succeed and return a mock user
+    callback(null, { sub: 'test-user-sub', username: 'testuser' });
+  },
+}));
+
 const request = require('supertest');
 const AWS = require('aws-sdk');
 const createApp = require('../index');
@@ -96,6 +104,7 @@ describe('API Unit Tests (using real app)', () => {
   test('POST /log-event should log events without file', async () => {
     const response = await request(app)
       .post('/log-event')
+      .set('Authorization', 'Bearer test.jwt.token')
       .send({ event: 'Test event' });
     expect(response.status).toBe(200);
     expect(response.text).toBe('Event logged successfully');
@@ -104,6 +113,7 @@ describe('API Unit Tests (using real app)', () => {
   test('POST /log-event should log events with file', async () => {
     const response = await request(app)
       .post('/log-event')
+      .set('Authorization', 'Bearer test.jwt.token')
       .set('x-with-file', 'true')
       .send({ event: 'Test event with file' });
     expect(response.status).toBe(200);
@@ -111,7 +121,9 @@ describe('API Unit Tests (using real app)', () => {
   });
 
   test('GET /view-events should return events', async () => {
-    const response = await request(app).get('/view-events');
+    const response = await request(app)
+      .get('/view-events')
+      .set('Authorization', 'Bearer test.jwt.token');
     expect(response.status).toBe(200);
     expect(Array.isArray(response.body)).toBe(true);
     expect(response.body.length).toBe(2);
@@ -125,7 +137,9 @@ describe('API Unit Tests (using real app)', () => {
       })
     }));
     app = createApp({ AWSLib: AWS, multerLib: require('multer') });
-    const response = await request(app).get('/view-events');
+    const response = await request(app)
+      .get('/view-events')
+      .set('Authorization', 'Bearer test.jwt.token');
     expect(response.status).toBe(200);
     expect(response.body).toEqual([]);
   });
@@ -137,7 +151,9 @@ describe('API Unit Tests (using real app)', () => {
       })
     }));
     app = createApp({ AWSLib: AWS, multerLib: require('multer') });
-    const response = await request(app).get('/view-events');
+    const response = await request(app)
+      .get('/view-events')
+      .set('Authorization', 'Bearer test.jwt.token');
     expect(response.status).toBe(500);
     expect(response.text).toBe('Error fetching events');
     expect(console.error).toHaveBeenCalled();

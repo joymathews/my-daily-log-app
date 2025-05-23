@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
-const jwt = require('jsonwebtoken');
 const AWS = require('aws-sdk');
 const multer = require('multer');
 const cors = require('cors'); // Import CORS
-
+const jwksClient = require('jwks-rsa');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const port = 3001;
@@ -160,10 +161,43 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
   };
   const dynamoDB = new AWSLib.DynamoDB.DocumentClient(dynamoDBConfig);
 
-  // Route for logging events
-  app.post('/log-event', upload.single('file'), async (req, res) => {
+  // Cognito config for backend verification
+  const COGNITO_REGION = process.env.COGNITO_REGION || process.env.AWS_REGION || 'us-east-1';
+  const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID;
+  const COGNITO_ISSUER = `https://cognito-idp.${COGNITO_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}`;
+
+  const client = jwksClient({
+    jwksUri: `${COGNITO_ISSUER}/.well-known/jwks.json`
+  });
+
+  function authenticateJWT(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).send('Missing or invalid Authorization header');
+    }
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, getKey, { issuer: COGNITO_ISSUER }, (err, decoded) => {
+      if (err) {
+        return res.status(401).send('Invalid token');
+      }
+      req.user = decoded;
+      next();
+    });
+
+    function getKey(header, callback) {
+      client.getSigningKey(header.kid, function (err, key) {
+        if (err) return callback(err);
+        const signingKey = key.getPublicKey();
+        callback(null, signingKey);
+      });
+    }
+  }
+
+  // Route for logging events (add authenticateJWT)
+  app.post('/log-event', authenticateJWT, upload.single('file'), async (req, res) => {
     const { event } = req.body;
     const file = req.file; // File will now be processed by multer
+    const userSub = req.user.sub; // Cognito user unique id
 
     // Add detailed logging
     console.log('Received event:', event);
@@ -180,6 +214,7 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
           id: Date.now().toString(),
           event: event || 'No description provided',
           timestamp: new Date().toISOString(),
+          userSub // Store user identity
         },
       };
       console.log('Saving event to DynamoDB:', params);
@@ -210,11 +245,14 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
     }
   });
 
-  // Route for viewing events
-  app.get('/view-events', async (req, res) => {
+  // Route for viewing events (add authenticateJWT)
+  app.get('/view-events', authenticateJWT, async (req, res) => {
+    const userSub = req.user.sub;
     try {
       const params = {
         TableName: DYNAMODB_TABLE_NAME,
+        FilterExpression: 'userSub = :userSub',
+        ExpressionAttributeValues: { ':userSub': userSub }
       };
       const data = await dynamoDB.scan(params).promise();
       res.status(200).json(data.Items);
