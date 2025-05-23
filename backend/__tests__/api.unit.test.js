@@ -91,6 +91,9 @@ describe('API Unit Tests (using real app)', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    // Remove any cached modules to reset module state
+    jest.resetModules();
+    // Do NOT call mockRestore on AWS.DynamoDB.DocumentClient, as it is a jest.fn() not a spy
   });
 
   test('GET /health should return 200 OK', async () => {

@@ -101,6 +101,7 @@ async function ensureTableExists() {
       WriteCapacityUnits: 5,
     },
   };
+  // Note: dynamoDB.service is used here to access the underlying AWS.DynamoDB service client, which provides methods like listTables and createTable not available on the DocumentClient. This is necessary for table management operations.
   try {
     console.log(`Checking if DynamoDB table ${DYNAMODB_TABLE_NAME} exists...`);
     const tables = await dynamoDB.service.listTables().promise();
