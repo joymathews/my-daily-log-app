@@ -222,13 +222,21 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
       return res.status(401).send('Missing or invalid Authorization header');
     }
     const token = authHeader.split(' ')[1];
-    jwt.verify(token, getKey, { issuer: COGNITO_ISSUER }, (err, decoded) => {
-      if (err) {
-        return res.status(401).send('Invalid token');
+    jwt.verify(
+      token,
+      getKey,
+      {
+        issuer: COGNITO_ISSUER,
+        audience: process.env.COGNITO_APP_CLIENT_ID // Add audience validation
+      },
+      (err, decoded) => {
+        if (err) {
+          return res.status(401).send('Invalid token');
+        }
+        req.user = decoded;
+        next();
       }
-      req.user = decoded;
-      next();
-    });
+    );
   }
 
   // Route for logging events (add authenticateJWT)
