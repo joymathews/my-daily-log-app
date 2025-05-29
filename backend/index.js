@@ -6,10 +6,10 @@ const multer = require('multer');
 const cors = require('cors'); // Import CORS
 const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
+const { v4: uuidv4 } = require('uuid'); // At the top of the file
 
 const app = express();
 const port = 3001;
-const upload = multer();
 
 app.use(bodyParser.json());
 
@@ -192,7 +192,6 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
     },
   };
   const dynamoDB = new AWSLib.DynamoDB.DocumentClient(dynamoDBConfig);
-  const dynamoDBAdmin = new AWSLib.DynamoDB(dynamoDBConfig); // Dedicated admin client
 
   // Cognito config for backend verification
   const COGNITO_REGION = process.env.COGNITO_REGION || process.env.AWS_REGION || 'us-east-1';
@@ -215,7 +214,8 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
   function authenticateJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).send('Missing or invalid Authorization header');
+      res.status(401).send('Missing or invalid Authorization header');
+      return;
     }
     const token = authHeader.split(' ')[1];
     jwt.verify(
@@ -227,7 +227,8 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
       },
       (err, decoded) => {
         if (err) {
-          return res.status(401).send('Invalid token');
+          res.status(401).send('Invalid token');
+          return;
         }
         req.user = decoded;
         next();
@@ -241,6 +242,12 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
     const file = req.file; // File will now be processed by multer
     const userSub = req.user.sub; // Cognito user unique id
 
+    // Input validation
+    if (!event && !file) {
+      res.status(400).send('Event description or file is required');
+      return;
+    }
+
     // Add detailed logging
     console.log('Received event:', event);
     if (file) {
@@ -249,18 +256,20 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
       console.log('No file provided');
     }
 
-    try {    // Save event to DynamoDB
+    try {
+      // Save event to DynamoDB
       const params = {
         TableName: DYNAMODB_TABLE_NAME,
         Item: {
-          id: Date.now().toString(),
+          id: uuidv4(), // Use UUID for event ID
           event: event || 'No description provided',
           timestamp: new Date().toISOString(),
           userSub // Store user identity
         },
       };
       console.log('Saving event to DynamoDB:', params);
-      await dynamoDB.put(params).promise();    // Upload file to S3 (if provided)
+      await dynamoDB.put(params).promise();
+      // Upload file to S3 (if provided)
       if (file) {
         try {
           // The bucket existence is already checked during server initialization
@@ -270,19 +279,20 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
             Body: file.buffer,
             ContentType: file.mimetype
           };
-          
           console.log('Uploading file to S3:', s3Params);
           const uploadResult = await s3.upload(s3Params).promise();
           console.log('File uploaded successfully:', uploadResult.Location);
         } catch (uploadError) {
           console.error('Error uploading file to S3:', uploadError);
-          throw new Error(`File upload failed: ${uploadError.message}`);
+          // Do not leak internal error details to client
+          res.status(500).send('File upload failed');
+          return;
         }
       }
-
       res.status(200).send('Event logged successfully');
     } catch (error) {
       console.error('Error logging event:', error);
+      // Do not leak internal error details to client
       res.status(500).send('Error logging event');
     }
   });
