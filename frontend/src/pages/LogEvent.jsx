@@ -1,13 +1,20 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import env from '../config/env';
 
 function LogEvent() {
   const [event, setEvent] = useState('');
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
+  const [validationError, setValidationError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setValidationError('');
+    if (!event && !file) {
+      setValidationError('Please enter an event description or select a file.');
+      return;
+    }
     const formData = new FormData();
     formData.append('event', event);
     if (file) {
@@ -15,13 +22,21 @@ function LogEvent() {
     }
 
     try {
-      const response = await axios.post('http://localhost:3001/log-event', formData, {
+      const token = localStorage.getItem('cognito_id_token');
+      const response = await axios.post(`${env.VITE_API_BASE_URL}/log-event`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
         },
       });
       if (response.status === 200) {
         setMessage(response.data);
+        setEvent('');
+        setFile(null);
+        // Reset file input value
+        if (document.querySelector('[data-testid="file-input"]')) {
+          document.querySelector('[data-testid="file-input"]').value = '';
+        }
       } else {
         setMessage('Unexpected response from server');
       }
@@ -47,6 +62,7 @@ function LogEvent() {
         />
         <button type="submit">Submit</button>
       </form>
+      {validationError && <p style={{ color: 'red' }}>{validationError}</p>}
       {message && <p>{message}</p>}
     </div>
   );
