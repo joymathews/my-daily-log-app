@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, Link } from 'react-router-dom';
 import Home from './pages/Home.jsx';
 import LogEvent from './pages/LogEvent.jsx';
 import ViewEvents from './pages/ViewEvents.jsx';
@@ -32,9 +32,9 @@ function ProtectedRoute({ children }) {
 function Header({ onSignOut }) {
   return (
     <nav style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
-      <a href="/">Home</a>
-      <a href="/log">Log an Event</a>
-      <a href="/view">View Events</a>
+      <Link to="/">Home</Link>
+      <Link to="/log">Log an Event</Link>
+      <Link to="/view">View Events</Link>
       <button onClick={onSignOut} style={{ marginLeft: 'auto' }}>Sign Out</button>
     </nav>
   );
