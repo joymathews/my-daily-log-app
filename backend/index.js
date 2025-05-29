@@ -95,23 +95,49 @@ async function ensureTableExists() {
     ],
     AttributeDefinitions: [
       { AttributeName: 'id', AttributeType: 'S' },
+      { AttributeName: 'userSub', AttributeType: 'S' }, // Add userSub for GSI
     ],
     ProvisionedThroughput: {
       ReadCapacityUnits: 5,
       WriteCapacityUnits: 5,
     },
+    GlobalSecondaryIndexes: [
+      {
+        IndexName: 'userSub-index',
+        KeySchema: [
+          { AttributeName: 'userSub', KeyType: 'HASH' },
+        ],
+        Projection: { ProjectionType: 'ALL' },
+        ProvisionedThroughput: {
+          ReadCapacityUnits: 5,
+          WriteCapacityUnits: 5,
+        },
+      },
+    ],
   };
-  // Note: dynamoDB.service is used here to access the underlying AWS.DynamoDB service client, which provides methods like listTables and createTable not available on the DocumentClient. This is necessary for table management operations.
   try {
     console.log(`Checking if DynamoDB table ${DYNAMODB_TABLE_NAME} exists...`);
     const tables = await dynamoDB.service.listTables().promise();
     if (tables.TableNames.includes(DYNAMODB_TABLE_NAME)) {
-      console.log(`Table ${DYNAMODB_TABLE_NAME} exists.`);
-      return true;
+      // Check if the GSI exists
+      const desc = await dynamoDB.service.describeTable({ TableName: DYNAMODB_TABLE_NAME }).promise();
+      const gsis = desc.Table.GlobalSecondaryIndexes || [];
+      const hasUserSubIndex = gsis.some(idx => idx.IndexName === 'userSub-index');
+      if (!hasUserSubIndex) {
+        console.log(`Table ${DYNAMODB_TABLE_NAME} exists but missing userSub-index. Deleting and recreating...`);
+        await dynamoDB.service.deleteTable({ TableName: DYNAMODB_TABLE_NAME }).promise();
+        await dynamoDB.service.waitFor('tableNotExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
+        await dynamoDB.service.createTable(params).promise();
+        await dynamoDB.service.waitFor('tableExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
+        console.log(`Table ${DYNAMODB_TABLE_NAME} recreated with userSub-index.`);
+        return true;
+      } else {
+        console.log(`Table ${DYNAMODB_TABLE_NAME} exists and has userSub-index.`);
+        return true;
+      }
     } else {
       console.log(`Table ${DYNAMODB_TABLE_NAME} doesn't exist. Creating it...`);
       await dynamoDB.service.createTable(params).promise();
-      // Wait for table to become active
       await dynamoDB.service.waitFor('tableExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
       console.log(`Table ${DYNAMODB_TABLE_NAME} created successfully.`);
       return true;
@@ -263,10 +289,11 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
     try {
       const params = {
         TableName: DYNAMODB_TABLE_NAME,
-        FilterExpression: 'userSub = :userSub',
+        IndexName: 'userSub-index',
+        KeyConditionExpression: 'userSub = :userSub',
         ExpressionAttributeValues: { ':userSub': userSub }
       };
-      const data = await dynamoDB.scan(params).promise();
+      const data = await dynamoDB.query(params).promise();
       res.status(200).json(data.Items);
     } catch (error) {
       console.error('Error fetching events:', error);

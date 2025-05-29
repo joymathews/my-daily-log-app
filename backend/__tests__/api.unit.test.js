@@ -10,6 +10,21 @@ jest.mock('aws-sdk', () => {
     put: jest.fn().mockReturnValue({
       promise: jest.fn().mockResolvedValue({})
     }),
+    query: jest.fn().mockImplementation(({ TableName, IndexName, KeyConditionExpression, ExpressionAttributeValues }) => {
+      // Simulate backend filtering by userSub for /view-events
+      if (TableName && IndexName === 'userSub-index' && KeyConditionExpression && ExpressionAttributeValues) {
+        // Provide test data for userSub
+        const allEvents = [
+          { id: '1', event: 'Test Event 1', timestamp: '2025-05-17T12:00:00Z', userSub: 'test-user-sub' },
+          { id: '2', event: 'Test Event 2', timestamp: '2025-05-17T12:30:00Z', userSub: 'test-user-sub' },
+          { id: '3', event: 'Other User Event', timestamp: '2025-05-17T13:00:00Z', userSub: 'other-user-sub' }
+        ];
+        const filtered = allEvents.filter(e => e.userSub === ExpressionAttributeValues[':userSub']);
+        return { promise: jest.fn().mockResolvedValue({ Items: filtered, Count: filtered.length }) };
+      }
+      // Default empty
+      return { promise: jest.fn().mockResolvedValue({ Items: [], Count: 0 }) };
+    }),
     scan: jest.fn().mockReturnValue({
       promise: jest.fn().mockResolvedValue({
         Items: [
@@ -135,7 +150,7 @@ describe('API Unit Tests (using real app)', () => {
 
   test('GET /view-events should return empty array when no events exist', async () => {
     AWS.DynamoDB.DocumentClient.mockImplementationOnce(() => ({
-      scan: jest.fn().mockReturnValue({
+      query: jest.fn().mockReturnValue({
         promise: jest.fn().mockResolvedValue({ Items: [], Count: 0 })
       })
     }));
@@ -214,7 +229,7 @@ describe('API Unit Tests (using real app)', () => {
     }));
     // Mock DynamoDB to return events for multiple users, but only return those matching the userSub filter
     AWS.DynamoDB.DocumentClient.mockImplementationOnce(() => ({
-      scan: jest.fn().mockImplementation(({ FilterExpression, ExpressionAttributeValues }) => {
+      query: jest.fn().mockImplementation(({ TableName, IndexName, KeyConditionExpression, ExpressionAttributeValues }) => {
         // Simulate backend filtering by userSub
         const allEvents = [
           { id: '1', event: 'User1 Event', timestamp: '2025-05-17T12:00:00Z', userSub: 'test-user-sub' },
