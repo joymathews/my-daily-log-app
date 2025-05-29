@@ -34,7 +34,7 @@ function LogEvent() {
         setMessage(response.data);
         setEvent('');
         setFile(null);
-        if (formRef.current) formRef.current.reset();
+        formRef.current?.reset();
       } else {
         setMessage('Unexpected response from server');
       }
