@@ -47,6 +47,7 @@ const dynamoDBConfig = {
   },
 };
 const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
+const dynamoDBAdmin = new AWS.DynamoDB(dynamoDBConfig); // Dedicated admin client
 
 // Function to ensure S3 bucket exists
 async function ensureBucketExists() {
@@ -117,10 +118,10 @@ async function ensureTableExists() {
   };
   try {
     console.log(`Checking if DynamoDB table ${DYNAMODB_TABLE_NAME} exists...`);
-    const tables = await dynamoDB.service.listTables().promise();
+    const tables = await dynamoDBAdmin.listTables().promise();
     if (tables.TableNames.includes(DYNAMODB_TABLE_NAME)) {
       // Check if the GSI exists
-      const desc = await dynamoDB.service.describeTable({ TableName: DYNAMODB_TABLE_NAME }).promise();
+      const desc = await dynamoDBAdmin.describeTable({ TableName: DYNAMODB_TABLE_NAME }).promise();
       const gsis = desc.Table.GlobalSecondaryIndexes || [];
       const hasUserSubIndex = gsis.some(idx => idx.IndexName === 'userSub-index');
       if (!hasUserSubIndex) {
@@ -131,8 +132,8 @@ async function ensureTableExists() {
       return true;
     } else {
       console.log(`Table ${DYNAMODB_TABLE_NAME} doesn't exist. Creating it...`);
-      await dynamoDB.service.createTable(params).promise();
-      await dynamoDB.service.waitFor('tableExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
+      await dynamoDBAdmin.createTable(params).promise();
+      await dynamoDBAdmin.waitFor('tableExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
       console.log(`Table ${DYNAMODB_TABLE_NAME} created successfully.`);
       return true;
     }
@@ -191,6 +192,7 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
     },
   };
   const dynamoDB = new AWSLib.DynamoDB.DocumentClient(dynamoDBConfig);
+  const dynamoDBAdmin = new AWSLib.DynamoDB(dynamoDBConfig); // Dedicated admin client
 
   // Cognito config for backend verification
   const COGNITO_REGION = process.env.COGNITO_REGION || process.env.AWS_REGION || 'us-east-1';

@@ -54,13 +54,29 @@ jest.mock('aws-sdk', () => {
     })
   };
 
+  // Mock for AWS.DynamoDB (admin client)
+  const mockDynamoDBAdmin = function() {
+    return {
+      listTables: jest.fn().mockReturnValue({
+        promise: jest.fn().mockResolvedValue({ TableNames: ['DailyLogEvents'] })
+      }),
+      describeTable: jest.fn().mockReturnValue({
+        promise: jest.fn().mockResolvedValue({
+          Table: { GlobalSecondaryIndexes: [{ IndexName: 'userSub-index' }] }
+        })
+      }),
+      createTable: jest.fn().mockReturnValue({ promise: jest.fn().mockResolvedValue({}) }),
+      waitFor: jest.fn().mockReturnValue({ promise: jest.fn().mockResolvedValue({}) })
+    };
+  };
+
   return {
-    config: {
-      update: jest.fn()
-    },
-    DynamoDB: {
-      DocumentClient: jest.fn(() => mockDocumentClient)
-    },
+    config: { update: jest.fn() },
+    DynamoDB: Object.assign(function () {}, {
+      DocumentClient: jest.fn(() => mockDocumentClient),
+      // When called as a constructor for admin client
+      prototype: mockDynamoDBAdmin()
+    }),
     S3: jest.fn(() => mockS3)
   };
 });
