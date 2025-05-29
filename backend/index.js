@@ -124,17 +124,11 @@ async function ensureTableExists() {
       const gsis = desc.Table.GlobalSecondaryIndexes || [];
       const hasUserSubIndex = gsis.some(idx => idx.IndexName === 'userSub-index');
       if (!hasUserSubIndex) {
-        console.log(`Table ${DYNAMODB_TABLE_NAME} exists but missing userSub-index. Deleting and recreating...`);
-        await dynamoDB.service.deleteTable({ TableName: DYNAMODB_TABLE_NAME }).promise();
-        await dynamoDB.service.waitFor('tableNotExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
-        await dynamoDB.service.createTable(params).promise();
-        await dynamoDB.service.waitFor('tableExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
-        console.log(`Table ${DYNAMODB_TABLE_NAME} recreated with userSub-index.`);
-        return true;
+        console.warn(`WARNING: Table ${DYNAMODB_TABLE_NAME} exists but is missing userSub-index. Queries by user will fail. Please migrate or recreate the table with the correct index.`);
       } else {
         console.log(`Table ${DYNAMODB_TABLE_NAME} exists and has userSub-index.`);
-        return true;
       }
+      return true;
     } else {
       console.log(`Table ${DYNAMODB_TABLE_NAME} doesn't exist. Creating it...`);
       await dynamoDB.service.createTable(params).promise();
