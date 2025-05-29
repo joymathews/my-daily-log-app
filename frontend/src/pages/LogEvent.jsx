@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import env from '../config/env';
 
@@ -7,6 +7,7 @@ function LogEvent() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
   const [validationError, setValidationError] = useState('');
+  const formRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,10 +34,7 @@ function LogEvent() {
         setMessage(response.data);
         setEvent('');
         setFile(null);
-        // Reset file input value
-        if (document.querySelector('[data-testid="file-input"]')) {
-          document.querySelector('[data-testid="file-input"]').value = '';
-        }
+        if (formRef.current) formRef.current.reset();
       } else {
         setMessage('Unexpected response from server');
       }
@@ -49,7 +47,7 @@ function LogEvent() {
   return (
     <div>
       <h1>Log an Event</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} ref={formRef}>
         <textarea
           placeholder="Describe your event"
           value={event}
