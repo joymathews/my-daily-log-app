@@ -35,7 +35,7 @@ jobs:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
       - name: Deploy to S3
-        uses: jakejarvis/s3-sync-action@v0.12.0
+        uses: jakejarvis/s3-sync-action@v0.11.0
         with:
           args: --delete
         env:
