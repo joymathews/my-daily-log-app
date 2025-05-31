@@ -7,7 +7,7 @@ import { renderWithRouter } from '../utils/test-utils';
 // This test checks that when a user visits the home page, they see a welcome message so they know they are in the right place.
 it('renders welcome message', () => {
   renderWithRouter(<Home />);
-  expect(screen.getByText(/Welcome to My Daily Log/i)).toBeInTheDocument();
+  expect(screen.getByText(/Welcome to Daily Notes/i)).toBeInTheDocument();
 });
 
 // This test checks that the home page shows links to log a new event or view past events, so users can easily navigate.

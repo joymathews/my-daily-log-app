@@ -33,7 +33,7 @@ describe('App routing (authenticated)', () => {
 
   // Test that the App renders Home page by default
   it('renders Home page on default route', () => {    render(<AppWithRouter />);
-    expect(screen.getByRole('heading', { name: /Welcome to My Daily Log/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Welcome to Daily Notes/i })).toBeInTheDocument();
   });
 
   // Test that the App renders LogEvent page on /log route
