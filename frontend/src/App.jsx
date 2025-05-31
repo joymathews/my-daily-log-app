@@ -8,6 +8,9 @@ import CognitoRegister from './components/CognitoRegister.jsx';
 import CognitoVerify from './components/CognitoVerify.jsx';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
 import env from './config/env';
+import './styles/Utilities.css';
+import './styles/Pages.css';
+import './styles/Animation.css';
 
 // Utility to get CognitoUserPool instance
 function getUserPool() {
@@ -21,44 +24,44 @@ function getUserPool() {
 function ProtectedRoute({ children }) {
   const userPool = getUserPool();
   const [isAuthenticated, setIsAuthenticated] = useState(null);
+  
   useEffect(() => {
     const user = userPool.getCurrentUser();
-    setIsAuthenticated(!!user);
+    const hasToken = localStorage.getItem('cognito_id_token');
+    setIsAuthenticated(!!(user && hasToken));
   }, []);
-  if (isAuthenticated === null) return null; // or a loader
+  
+  if (isAuthenticated === null) {
+    return <div className="loading-container">
+      <div className="spinner"></div>
+      <p>Loading...</p>
+    </div>;
+  }
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 
-function Header({ onSignOut }) {
+// Sign out button component to be used in the Header
+function SignOutButton({ onSignOut }) {
   return (
-    <nav style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
-      <Link to="/">Home</Link>
-      <Link to="/log">Log an Event</Link>
-      <Link to="/view">View Events</Link>
-      <button onClick={onSignOut} style={{ marginLeft: 'auto' }}>Sign Out</button>
-    </nav>
+    <button 
+      onClick={onSignOut} 
+      className="sign-out-button"
+    >
+      Sign Out
+    </button>
   );
-}
-
-function HomeWithHeader({ onSignOut }) {
-  return <><Header onSignOut={onSignOut} /><Home /></>;
-}
-function LogEventWithHeader({ onSignOut }) {
-  return <><Header onSignOut={onSignOut} /><LogEvent /></>;
-}
-function ViewEventsWithHeader({ onSignOut }) {
-  return <><Header onSignOut={onSignOut} /><ViewEvents /></>;
 }
 
 function App() {
   const userPool = getUserPool();
-  const [isAuthenticated, setIsAuthenticated] = useState(!!userPool.getCurrentUser());
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const navigate = useNavigate();
 
   // Listen for login/logout changes
   useEffect(() => {
     const user = userPool.getCurrentUser();
-    setIsAuthenticated(!!user);
+    const hasToken = localStorage.getItem('cognito_id_token');
+    setIsAuthenticated(!!(user && hasToken));
   }, []);
 
   const handleSignOut = () => {
@@ -66,29 +69,30 @@ function App() {
     if (user) user.signOut();
     setIsAuthenticated(false);
     navigate('/login');
-  };
-
-  return (
+  };  return (
     <Routes>
       <Route path="/login" element={
         isAuthenticated ? <Navigate to="/" replace /> :
-        <CognitoLogin onLogin={() => { setIsAuthenticated(true); navigate('/'); }} />
+        <CognitoLogin onLogin={() => { 
+          setIsAuthenticated(true); 
+          navigate('/');
+        }} />
       } />
       <Route path="/register" element={<CognitoRegister />} />
       <Route path="/verify" element={<CognitoVerify />} />
       <Route path="/" element={
         <ProtectedRoute>
-          <HomeWithHeader onSignOut={handleSignOut} />
+          <Home onSignOut={handleSignOut} />
         </ProtectedRoute>
       } />
       <Route path="/log" element={
         <ProtectedRoute>
-          <LogEventWithHeader onSignOut={handleSignOut} />
+          <LogEvent onSignOut={handleSignOut} />
         </ProtectedRoute>
       } />
       <Route path="/view" element={
         <ProtectedRoute>
-          <ViewEventsWithHeader onSignOut={handleSignOut} />
+          <ViewEvents onSignOut={handleSignOut} />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/login" replace />} />

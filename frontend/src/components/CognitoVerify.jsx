@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { CognitoUserPool, CognitoUser } from 'amazon-cognito-identity-js';
+import { Link } from 'react-router-dom';
 import env from '../config/env';
+import '../styles/CognitoShared.css';
 
 const poolData = {
   UserPoolId: env.VITE_COGNITO_USER_POOL_ID,
@@ -26,26 +28,51 @@ function CognitoVerify() {
       }
     });
   };
-
   return (
-    <div>
-      <h2>Verify Account</h2>
-      <form role="form" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Verification Code"
-          value={code}
-          onChange={e => setCode(e.target.value)}
-        />
-        <button type="submit">Verify</button>
-      </form>
-      {message && <p>{message}</p>}
+    <div className="auth-container">
+      <h1 className="page-title">Daily Notes</h1>
+      <div className="auth-card">
+        <h2 className="auth-title">Verify Account</h2>
+        <form role="form" onSubmit={handleSubmit} className="auth-form">
+          <div className="form-content">
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
+              <input
+                id="username"
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                required
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="code">Verification Code</label>
+              <input
+                id="code"
+                type="text"
+                placeholder="Verification Code"
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                required
+                className="form-input"
+              />
+            </div>
+            {message && (
+              <div className={message.includes('failed') ? 'error-message' : 'success-message'}>
+                {message}
+              </div>
+            )}
+            <button type="submit" className="auth-button">Verify</button>
+          </div>
+        </form>
+        <div className="auth-links">
+          <Link to="/login" className="auth-link">Login</Link>
+          <span className="separator">|</span>
+          <Link to="/register" className="auth-link">Register</Link>
+        </div>
+      </div>
     </div>
   );
 }

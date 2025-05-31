@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
+import { Link } from 'react-router-dom';
 import env from '../config/env';
+import '../styles/CognitoShared.css';
 
 const poolData = {
   UserPoolId: env.VITE_COGNITO_USER_POOL_ID,
@@ -34,32 +36,63 @@ function CognitoRegister() {
       }
     );
   };
-
   return (
-    <div>
-      <h2>Register</h2>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="First Name"
-          value={firstName}
-          onChange={e => setFirstName(e.target.value)}
-        />
-        <button type="submit">Register</button>
-      </form>
-      {message && <p>{message}</p>}
+    <div className="auth-container">
+      <h1 className="page-title">Daily Notes</h1>
+      <div className="auth-card">
+        <h2 className="auth-title">Register</h2>
+        <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-content">
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
+              <input
+                id="username"
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                required
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                className="form-input"
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="firstName">First Name</label>
+              <input
+                id="firstName"
+                type="text"
+                placeholder="First Name"
+                value={firstName}
+                onChange={e => setFirstName(e.target.value)}
+                required
+                className="form-input"
+              />
+            </div>
+            {message && (
+              <div className={message.includes('failed') ? 'error-message' : 'success-message'}>
+                {message}
+              </div>
+            )}
+            <button type="submit" className="auth-button">Register</button>
+          </div>
+        </form>
+        <div className="auth-links">
+          <Link to="/login" className="auth-link">Login</Link>
+          <span className="separator">|</span>
+          <Link to="/verify" className="auth-link">Verify</Link>
+        </div>
+      </div>
     </div>
   );
 }
