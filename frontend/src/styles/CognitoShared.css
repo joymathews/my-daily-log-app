@@ -8,14 +8,6 @@
   background-color: #f5f7fa;
 }
 
-.app-title {
-  color: #333;
-  font-size: 2.5rem;
-  margin-bottom: 1.5rem;
-  font-weight: 700;
-  text-align: center;
-}
-
 .auth-card {
   background-color: white;
   border-radius: 8px;

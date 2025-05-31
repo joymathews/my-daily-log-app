@@ -38,7 +38,7 @@ function CognitoRegister() {
   };
   return (
     <div className="auth-container">
-      <h1 className="app-title">Daily Notes</h1>
+      <h1 className="page-title">Daily Notes</h1>
       <div className="auth-card">
         <h2 className="auth-title">Register</h2>
         <form onSubmit={handleSubmit} className="auth-form">

@@ -9,10 +9,9 @@ function Home({ onSignOut }) {
       <Header onSignOut={onSignOut} />
       <main className="page-container">
         <section className="home-hero fade-in">
-          <h2 className="page-title">Welcome to My Daily Log</h2>
+          <h2 className="page-title">Welcome to Daily Notes</h2>
           <p className="home-intro slide-in-bottom">
-            Track your daily activities, thoughts, and experiences in one place. 
-            My Daily Log helps you keep organized records of what matters to you.
+            Note down your daily activities, thoughts, and experiences in one place.
           </p>
           
           <div className="home-features">
@@ -23,7 +22,7 @@ function Home({ onSignOut }) {
             </div>
             
             <div className="feature-card slide-in-bottom" style={{ animationDelay: '0.2s' }}>
-              <h3>View History</h3>
+              <h3>View Events</h3>
               <p>Browse through your past logs in chronological order.</p>
               <Link to="/view" className="feature-link">View Events</Link>
             </div>

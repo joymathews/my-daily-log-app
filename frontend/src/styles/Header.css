@@ -16,13 +16,20 @@
   background-color: var(--color-secondary-light);
 }
 
-.app-title {
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-title {
   font-size: 1.8rem;
-  margin: 0 0 1rem 0;
-  color: var(--color-light);
+  margin: 0;
+  color: #fff !important;
   font-weight: 700;
   letter-spacing: -0.5px;
   animation: fadeIn 0.5s ease-out;
+  text-shadow: none;
 }
 
 .main-nav .nav-links {

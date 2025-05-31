@@ -23,31 +23,33 @@ function Header({ onSignOut }) {
 
   return (
     <header className="app-header">
-      <h1 className="app-title">My Daily Log</h1>
-      <nav className="main-nav">
-        <ul className="nav-links">
-          <li className={location.pathname === '/' ? 'active' : ''}>
-            <Link to="/">Home</Link>
-          </li>
-          <li className={location.pathname === '/log' ? 'active' : ''}>
-            <Link to="/log">Log Event</Link>
-          </li>
-          <li className={location.pathname === '/view' ? 'active' : ''}>
-            <Link to="/view">View Events</Link>
-          </li>
-          {isAuthenticated ? (
-            <li className="auth-link">
-              <button className="sign-out-btn" onClick={handleSignOut}>
-                Sign Out
-              </button>
+      <div className="header-row">
+        <h1 className="header-title">Daily Notes</h1>
+        <nav className="main-nav">
+          <ul className="nav-links">
+            <li className={location.pathname === '/' ? 'active' : ''}>
+              <Link to="/">Home</Link>
             </li>
-          ) : (
-            <li className="auth-link">
-              <Link to="/login">Login</Link>
+            <li className={location.pathname === '/log' ? 'active' : ''}>
+              <Link to="/log">Log Event</Link>
             </li>
-          )}
-        </ul>
-      </nav>
+            <li className={location.pathname === '/view' ? 'active' : ''}>
+              <Link to="/view">View Events</Link>
+            </li>
+            {isAuthenticated ? (
+              <li className="auth-link">
+                <button className="sign-out-btn" onClick={handleSignOut}>
+                  Sign Out
+                </button>
+              </li>
+            ) : (
+              <li className="auth-link">
+                <Link to="/login">Login</Link>
+              </li>
+            )}
+          </ul>
+        </nav>
+      </div>
     </header>
   );
 }

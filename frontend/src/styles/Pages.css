@@ -213,9 +213,9 @@ button:hover {
   box-shadow: var(--shadow-sm);
 }
 
-/* Unified app-title style */
-.app-title {
-  color: var(--color-secondary);
+/* Unified page-title style */
+.page-title {
+  color: #111;
   font-size: var(--font-size-2xl);
   margin-bottom: 1.5rem;
   font-weight: 700;
