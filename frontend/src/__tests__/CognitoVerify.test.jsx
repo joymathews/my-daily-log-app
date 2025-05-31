@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import CognitoVerify from '../components/CognitoVerify';
+import { renderWithRouter } from '../utils/test-utils';
 
 // Mock react-router-dom
 jest.mock('react-router-dom', () => ({
@@ -33,13 +33,7 @@ describe('CognitoVerify', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-  
-  // Wrapper component to provide Router context
-  const renderWithRouter = (component) => {
-    return render(
-      <BrowserRouter>{component}</BrowserRouter>
-    );
-  };
+    // Using the imported renderWithRouter from test-utils.jsx
 
   // This test checks that the verification form shows the fields and button a user needs to verify their account.
   it('renders verification form fields and button', () => {

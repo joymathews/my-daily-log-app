@@ -14,7 +14,6 @@ function CognitoLogin({ onLogin }) {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-
   // Check if token is expired (simple check for exp in JWT)
   function isTokenExpired(token) {
     if (!token) return true;
@@ -29,12 +28,18 @@ function CognitoLogin({ onLogin }) {
   // On mount, check for expired session and clear if needed
   React.useEffect(() => {
     const idToken = localStorage.getItem('cognito_id_token');
+    
+    // Clear any existing tokens
     if (idToken && isTokenExpired(idToken)) {
       localStorage.removeItem('cognito_id_token');
       localStorage.removeItem('cognito_access_token');
       localStorage.removeItem('cognito_refresh_token');
+    } else if (idToken) {
+      // If we have a valid token, redirect to the home page
+      if (onLogin) onLogin();
+      navigate('/');
     }
-  }, []);
+  }, [navigate, onLogin]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

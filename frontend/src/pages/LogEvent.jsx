@@ -1,12 +1,15 @@
 import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import env from '../config/env';
+import Header from '../components/Header';
+import '../styles/Pages.css';
 
-function LogEvent() {
+function LogEvent({ onSignOut }) {
   const [event, setEvent] = useState('');
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState('');
   const [validationError, setValidationError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const formRef = useRef(null);
 
   const handleSubmit = async (e) => {
@@ -23,6 +26,7 @@ function LogEvent() {
     }
 
     try {
+      setIsLoading(true);
       const token = localStorage.getItem('cognito_id_token');
       const response = await axios.post(`${env.VITE_API_BASE_URL}/log-event`, formData, {
         headers: {
@@ -41,28 +45,55 @@ function LogEvent() {
     } catch (error) {
       console.error('Error logging event:', error.response || error.message);
       setMessage('Error logging event');
+    } finally {
+      setIsLoading(false);
     }
   };
-
   return (
-    <div>
-      <h1>Log an Event</h1>
-      <form onSubmit={handleSubmit} ref={formRef}>
-        <textarea
-          placeholder="Describe your event"
-          value={event}
-          onChange={(e) => setEvent(e.target.value)}
-        />
-        <input
-          type="file"
-          data-testid="file-input"
-          onChange={(e) => setFile(e.target.files[0])}
-        />
-        <button type="submit">Submit</button>
-      </form>
-      {validationError && <p style={{ color: 'red' }}>{validationError}</p>}
-      {message && <p>{message}</p>}
-    </div>
+    <>
+      <Header onSignOut={onSignOut} />
+      <main className="page-container">
+        <h2 className="page-title fade-in">Log an Event</h2>
+        <div className="form-container slide-in-bottom">
+          <form onSubmit={handleSubmit} ref={formRef}>
+            <div className="form-group">
+              <label htmlFor="event-description">Event Description</label>
+              <textarea
+                id="event-description"
+                placeholder="Describe your event"
+                value={event}
+                onChange={(e) => setEvent(e.target.value)}
+              />
+            </div>
+            
+            <div className="file-input-container">
+              <label htmlFor="file-upload">Attach a File (Optional)</label>
+              <input
+                id="file-upload"
+                className="file-input"
+                type="file"
+                data-testid="file-input"
+                onChange={(e) => setFile(e.target.files[0])}
+              />
+            </div>
+            
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <span className="spinner" style={{ marginRight: '8px' }}></span>
+                  Submitting...
+                </>
+              ) : (
+                'Submit Event'
+              )}
+            </button>
+          </form>
+          
+          {validationError && <div className="error-message slide-in-right">{validationError}</div>}
+          {message && <div className="success-message slide-in-right">{message}</div>}
+        </div>
+      </main>
+    </>
   );
 }
 

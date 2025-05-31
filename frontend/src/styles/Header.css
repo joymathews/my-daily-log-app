@@ -1,0 +1,103 @@
+.app-header {
+  background-color: var(--color-secondary);
+  padding: 1rem 2rem;
+  color: white;
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-header:hover {
+  background-color: var(--color-secondary-light);
+}
+
+.app-title {
+  font-size: 1.8rem;
+  margin: 0 0 1rem 0;
+  color: var(--color-light);
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.main-nav .nav-links {
+  display: flex;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  gap: 1.5rem;
+}
+
+.main-nav .nav-links li {
+  font-weight: 500;
+}
+
+.main-nav .nav-links li a {
+  color: #ecf0f1;
+  text-decoration: none;
+  padding: 0.5rem 0;
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+.main-nav .nav-links li a:hover {
+  color: #3498db;
+}
+
+.main-nav .nav-links li.active a {
+  color: #3498db;
+}
+
+.main-nav .nav-links li.active a::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #3498db;
+}
+
+.main-nav .nav-links li.auth-link {
+  margin-left: auto;
+}
+
+.main-nav .nav-links li.auth-link a,
+.main-nav .nav-links li.auth-link .sign-out-btn {
+  background-color: var(--color-primary);
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius-md);
+  transition: all 0.3s ease;
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.main-nav .nav-links li.auth-link a:hover,
+.main-nav .nav-links li.auth-link .sign-out-btn:hover {
+  background-color: var(--color-primary-dark);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 768px) {
+  .main-nav .nav-links {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .main-nav .nav-links li.auth-link {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+}

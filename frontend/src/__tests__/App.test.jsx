@@ -21,26 +21,31 @@ describe('App routing (authenticated)', () => {
       getCurrentUser: () => ({ signOut: jest.fn() }),
       signUp: jest.fn()
     }));
+    // Mock localStorage to simulate authentication
+    jest.spyOn(window.localStorage.__proto__, 'getItem').mockImplementation((key) => {
+      if (key === 'cognito_id_token') return 'mock-token';
+      return null;
+    });
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   // Test that the App renders Home page by default
-  it('renders Home page on default route', () => {
-    render(<AppWithRouter />);
+  it('renders Home page on default route', () => {    render(<AppWithRouter />);
     expect(screen.getByRole('heading', { name: /Welcome to My Daily Log/i })).toBeInTheDocument();
   });
 
   // Test that the App renders LogEvent page on /log route
   it('renders LogEvent page on /log route', () => {
-    window.history.pushState({}, '', '/log');
-    render(<AppWithRouter />);
+    window.history.pushState({}, '', '/log');    render(<AppWithRouter />);
     // There are multiple elements with 'Log an Event', so check for the heading
     expect(screen.getByRole('heading', { name: /Log an Event/i })).toBeInTheDocument();
   });
 
   // Test that the App renders ViewEvents page on /view route
   it('renders ViewEvents page on /view route', () => {
-    window.history.pushState({}, '', '/view');
-    render(<AppWithRouter />);
+    window.history.pushState({}, '', '/view');    render(<AppWithRouter />);
     // There are multiple elements with 'View Events', so check for the heading
     expect(screen.getByRole('heading', { name: /View Events/i })).toBeInTheDocument();
   });

@@ -1,7 +1,8 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import CognitoLogin from '../components/CognitoLogin';
+import { renderWithRouter } from '../utils/test-utils';
 
 // Mock react-router-dom's useNavigate
 jest.mock('react-router-dom', () => ({
@@ -31,18 +32,16 @@ describe('CognitoLogin', () => {
     jest.clearAllMocks();
     localStorage.clear();
   });
-
   // This test checks that the login form shows the fields and button a user needs to log in.
   it('renders login form fields and button', () => {
-    render(<CognitoLogin />);
+    renderWithRouter(<CognitoLogin />);
     expect(screen.getByPlaceholderText(/Username/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Login/i })).toBeInTheDocument();
   });
-
   // This test checks that when a user types in their username and password, the form updates to show what they typed.
   it('handles input changes', () => {
-    render(<CognitoLogin />);
+    renderWithRouter(<CognitoLogin />);
     const usernameInput = screen.getByPlaceholderText(/Username/i);
     const passwordInput = screen.getByPlaceholderText(/Password/i);
     fireEvent.change(usernameInput, { target: { value: 'user1' } });
@@ -50,10 +49,9 @@ describe('CognitoLogin', () => {
     expect(usernameInput.value).toBe('user1');
     expect(passwordInput.value).toBe('pass1');
   });
-
   // This test checks that if a user tries to log in without entering anything, they do not see a login error message.
   it('shows error on empty submit', async () => {
-    render(<CognitoLogin />);
+    renderWithRouter(<CognitoLogin />);
     fireEvent.click(screen.getByRole('button', { name: /Login/i }));
     await waitFor(() => {
       expect(screen.queryByText(/Login failed/i)).not.toBeInTheDocument();
@@ -65,7 +63,7 @@ describe('CognitoLogin', () => {
     mockAuthenticateUser.mockImplementation((authDetails, callbacks) => {
       callbacks.onFailure({ message: 'Invalid credentials' });
     });
-    render(<CognitoLogin />);
+    renderWithRouter(<CognitoLogin />);
     fireEvent.change(screen.getByPlaceholderText(/Username/i), { target: { value: 'user1' } });
     fireEvent.change(screen.getByPlaceholderText(/Password/i), { target: { value: 'wrongpass' } });
     fireEvent.click(screen.getByRole('button', { name: /Login/i }));
@@ -83,7 +81,7 @@ describe('CognitoLogin', () => {
         getRefreshToken: () => ({ getToken: () => 'refreshtoken' })
       });
     });
-    render(<CognitoLogin />);
+    renderWithRouter(<CognitoLogin />);
     fireEvent.change(screen.getByPlaceholderText(/Username/i), { target: { value: 'user1' } });
     fireEvent.change(screen.getByPlaceholderText(/Password/i), { target: { value: 'rightpass' } });
     fireEvent.click(screen.getByRole('button', { name: /Login/i }));
@@ -94,7 +92,7 @@ describe('CognitoLogin', () => {
 
   // This test checks that the login form uses the correct field types for accessibility, so screen readers and browsers know how to handle them.
   it('renders accessibility attributes', () => {
-    render(<CognitoLogin />);
+    renderWithRouter(<CognitoLogin />);
     expect(screen.getByPlaceholderText(/Username/i)).toHaveAttribute('type', 'text');
     expect(screen.getByPlaceholderText(/Password/i)).toHaveAttribute('type', 'password');
   });

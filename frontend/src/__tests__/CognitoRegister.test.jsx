@@ -19,21 +19,16 @@ jest.mock('react-router-dom', () => ({
 
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { screen, fireEvent, waitFor } from '@testing-library/react';
 import CognitoRegister from '../components/CognitoRegister';
+import { renderWithRouter } from '../utils/test-utils';
 
 describe('CognitoRegister', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  // Wrapper component to provide Router context
-  const renderWithRouter = (component) => {
-    return render(
-      <BrowserRouter>{component}</BrowserRouter>
-    );
-  };
+  // Using the imported renderWithRouter from test-utils.jsx
 
   // This test checks that the registration form shows all the fields and button a user needs to create an account.
   it('renders registration form fields and button', () => {
