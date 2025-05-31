@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import env from '../config/env';
-import './CognitoLogin.css';
+import '../styles/CognitoShared.css';
 
 // Helper to sanitize error messages (basic)
 function sanitize(str) {
@@ -62,11 +62,11 @@ function CognitoLogin({ onLogin }) {
       });
     });
   };  return (
-    <div className="login-container">
+    <div className="auth-container">
       <h1 className="app-title">Daily Notes</h1>
-      <div className="login-card">
-        <h2 className="login-title">Login</h2>
-        <form onSubmit={handleSubmit} className="login-form">
+      <div className="auth-card">
+        <h2 className="auth-title">Login</h2>
+        <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-content">
             <div className="form-group">
               <label htmlFor="username">Username</label>
@@ -97,10 +97,10 @@ function CognitoLogin({ onLogin }) {
                 {message}
               </div>
             )}
-            <button type="submit" className="login-button">Login</button>
+            <button type="submit" className="auth-button">Login</button>
           </div>
         </form>
-        <div className="login-links">
+        <div className="auth-links">
           <Link to="/register" className="auth-link">Register</Link>
           <span className="separator">|</span>
           <Link to="/verify" className="auth-link">Verify</Link>
