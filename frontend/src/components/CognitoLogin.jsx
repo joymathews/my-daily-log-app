@@ -61,9 +61,9 @@ function CognitoLogin({ onLogin }) {
         }
       });
     });
-  };
-  return (
+  };  return (
     <div className="login-container">
+      <h1 className="app-title">Daily Notes</h1>
       <div className="login-card">
         <h2 className="login-title">Login</h2>
         <form onSubmit={handleSubmit} className="login-form">
