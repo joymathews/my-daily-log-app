@@ -72,6 +72,7 @@ function LogEvent({ onSignOut }) {
                 id="file-upload"
                 className="file-input"
                 type="file"
+                name="file"
                 data-testid="file-input"
                 onChange={(e) => setFile(e.target.files[0])}
               />

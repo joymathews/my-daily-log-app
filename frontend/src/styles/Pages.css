@@ -240,6 +240,8 @@ button:hover {
   border-left: 4px solid var(--color-primary);
   position: relative;
   overflow: hidden;
+  /* Use custom property for animation delay */
+  animation-delay: var(--animation-delay, 0s);
 }
 
 .event-item::before {

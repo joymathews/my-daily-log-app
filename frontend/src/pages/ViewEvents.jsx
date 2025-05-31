@@ -23,6 +23,7 @@ function ViewEvents({ onSignOut }) {
         setError(null);
       } catch (error) {
         setError('Failed to load events. Please try again later.');
+        setEvents([]); // Clear events on error to avoid showing stale data
       } finally {
         setLoading(false);
       }
@@ -56,7 +57,7 @@ function ViewEvents({ onSignOut }) {
         
         {loading ? (
           <div className="loading">
-            <div className="spinner"></div>
+            <div className="spinner" role="status" aria-label="Loading events"></div>
             <p>Loading events...</p>
           </div>
         ) : error ? (
@@ -71,7 +72,7 @@ function ViewEvents({ onSignOut }) {
                 key={event.id} 
                 className="event-item slide-in-bottom" 
                 data-testid={`event-item-${event.id}`}
-                style={{ animationDelay: `${index * 0.05}s` }}
+                style={{ '--animation-delay': `${index * 0.05}s` }}
               >
                 <span className="event-timestamp">{formatDate(event.timestamp)}</span>
                 <p className="event-content">{event.event}</p>
