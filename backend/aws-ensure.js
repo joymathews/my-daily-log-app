@@ -50,10 +50,7 @@ async function ensureTableExists() {
       { AttributeName: 'id', AttributeType: 'S' },
       { AttributeName: 'userSub', AttributeType: 'S' },
     ],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5,
-    },
+    BillingMode: 'PAY_PER_REQUEST',
     GlobalSecondaryIndexes: [
       {
         IndexName: 'userSub-index',
@@ -61,10 +58,6 @@ async function ensureTableExists() {
           { AttributeName: 'userSub', KeyType: 'HASH' },
         ],
         Projection: { ProjectionType: 'ALL' },
-        ProvisionedThroughput: {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
-        },
       },
     ],
   };
