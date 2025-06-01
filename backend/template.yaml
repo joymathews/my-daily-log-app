@@ -2,6 +2,16 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: My Daily Log App backend infrastructure
 
+Parameters:
+  CognitoRegion:
+    Type: String
+  CognitoUserPoolId:
+    Type: String
+  CognitoUserPoolWebClientId:
+    Type: String
+  CorsOrigin:
+    Type: String
+
 Globals:
   Function:
     Timeout: 30
@@ -18,6 +28,11 @@ Resources:
         Variables:
           S3_BUCKET_NAME: my-daily-log-files
           DYNAMODB_TABLE_NAME: DailyLogEvents
+          AWS_REGION: !Ref AWS::Region
+          COGNITO_REGION: !Ref CognitoRegion
+          COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
+          COGNITO_USER_POOL_WEB_CLIENT_ID: !Ref CognitoUserPoolWebClientId
+          CORS_ORIGIN: !Ref CorsOrigin
       Policies:
         - Version: "2012-10-17"
           Statement:
