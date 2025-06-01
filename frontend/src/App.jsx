@@ -63,7 +63,9 @@ function App() {
     const user = userPool.getCurrentUser();
     const hasToken = localStorage.getItem('cognito_id_token');
     setIsAuthenticated(!!(user && hasToken));
-    if (!(user && hasToken)) {
+    if (user && hasToken) {
+      fetchAndSetUserName();
+    } else {
       setUserName('');
     }
   }, []);
