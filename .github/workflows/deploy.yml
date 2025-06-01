@@ -1,7 +1,9 @@
 name: Deploy Frontend to S3
 
 on:
-  workflow_dispatch:  # Only run when manually triggered
+  workflow_dispatch:
+    branches:
+      - release
 
 concurrency:
   group: deploy-frontend-to-s3
