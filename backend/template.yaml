@@ -44,8 +44,8 @@ Resources:
                 - dynamodb:BatchGetItem
                 - dynamodb:DescribeTable
               Resource:
-                - arn:aws:dynamodb:{{AWS::Region}}:{{AWS::AccountId}}:table/DailyLogEvents
-                - arn:aws:dynamodb:{{AWS::Region}}:{{AWS::AccountId}}:table/DailyLogEvents/index/userSub-index
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/DailyLogEvents
+                - !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/DailyLogEvents/index/userSub-index
             # Allow Lambda basic execution (logs)
             - Effect: Allow
               Action:
