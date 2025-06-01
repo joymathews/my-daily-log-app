@@ -6,7 +6,6 @@ const multer = require('multer');
 const cors = require('cors');
 const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
 const { S3_BUCKET_NAME, DYNAMODB_TABLE_NAME, AWS_REGION, DYNAMODB_ENDPOINT, S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, COGNITO_REGION, COGNITO_USER_POOL_ID, COGNITO_APP_CLIENT_ID, CORS_ORIGIN } = require('./config');
 
 const app = express();
@@ -115,7 +114,6 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
    * @property {object} s3 - AWS S3 client for file storage operations.
    * @property {string} S3_BUCKET_NAME - Name of the S3 bucket used for file uploads.
    * @property {string} DYNAMODB_TABLE_NAME - Name of the DynamoDB table for log events.
-   * @property {function} uuidv4 - Function to generate UUIDs for unique identifiers.
    */
   const deps = {
     authenticateJWT,
@@ -123,8 +121,7 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
     dynamoDB,
     s3,
     S3_BUCKET_NAME,
-    DYNAMODB_TABLE_NAME,
-    uuidv4
+    DYNAMODB_TABLE_NAME
   };
   require('./routes/logEvent')(app, deps);
   require('./routes/viewEvents')(app, deps);
