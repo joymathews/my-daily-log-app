@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import '../styles/Pages.css';
 
-function Home({ onSignOut }) {
+function Home({ onSignOut, userName }) {
   return (
     <>
       <Header onSignOut={onSignOut} />
       <main className="page-container">
         <section className="home-hero fade-in">
-          <h2 className="page-title">Welcome to Daily Notes</h2>
+          <h2 className="page-title">Welcome{userName ? `, ${userName}` : ''} to Daily Notes</h2>
           <p className="home-intro slide-in-bottom">
             Note down your daily activities, thoughts, and experiences in one place.
           </p>

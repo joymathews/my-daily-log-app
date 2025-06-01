@@ -55,26 +55,53 @@ function SignOutButton({ onSignOut }) {
 function App() {
   const userPool = getUserPool();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState('');
   const navigate = useNavigate();
 
-  // Listen for login/logout changes
+  // Only check authentication status on mount
   useEffect(() => {
     const user = userPool.getCurrentUser();
     const hasToken = localStorage.getItem('cognito_id_token');
     setIsAuthenticated(!!(user && hasToken));
+    if (user && hasToken) {
+      fetchAndSetUserName();
+    } else {
+      setUserName('');
+    }
   }, []);
+
+  // Helper to fetch and set user's given_name
+  const fetchAndSetUserName = () => {
+    const user = userPool.getCurrentUser();
+    if (user) {
+      user.getSession((err, session) => {
+        if (!err && session) {
+          user.getUserAttributes((err, attributes) => {
+            if (!err && attributes) {
+              const givenNameAttr = attributes.find(attr => attr.getName() === 'given_name');
+              setUserName(givenNameAttr ? givenNameAttr.getValue() : '');
+            }
+          });
+        }
+      });
+    }
+  };
 
   const handleSignOut = () => {
     const user = userPool.getCurrentUser();
     if (user) user.signOut();
     setIsAuthenticated(false);
+    setUserName('');
     navigate('/login');
-  };  return (
+  };
+
+  return (
     <Routes>
       <Route path="/login" element={
         isAuthenticated ? <Navigate to="/" replace /> :
-        <CognitoLogin onLogin={() => { 
-          setIsAuthenticated(true); 
+        <CognitoLogin onLogin={() => {
+          setIsAuthenticated(true);
+          fetchAndSetUserName();
           navigate('/');
         }} />
       } />
@@ -82,7 +109,7 @@ function App() {
       <Route path="/verify" element={<CognitoVerify />} />
       <Route path="/" element={
         <ProtectedRoute>
-          <Home onSignOut={handleSignOut} />
+          <Home onSignOut={handleSignOut} userName={userName} />
         </ProtectedRoute>
       } />
       <Route path="/log" element={
