@@ -58,7 +58,6 @@ async function ensureTableExists() {
           { AttributeName: 'userSub', KeyType: 'HASH' },
         ],
         Projection: { ProjectionType: 'ALL' },
-        // No ProvisionedThroughput here for PAY_PER_REQUEST
       },
     ],
   };

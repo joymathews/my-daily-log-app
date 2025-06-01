@@ -45,7 +45,7 @@ Resources:
                 - dynamodb:DescribeTable
               Resource:
                 - arn:aws:dynamodb:{{AWS::Region}}:{{AWS::AccountId}}:table/DailyLogEvents
-                - arn:aws:dynamodb:{{AWS::Region}}:{{AWS::AccountId}}:table/DailyLogEvents/index/*
+                - arn:aws:dynamodb:{{AWS::Region}}:{{AWS::AccountId}}:table/DailyLogEvents/index/userSub-index
             # Allow Lambda basic execution (logs)
             - Effect: Allow
               Action:
