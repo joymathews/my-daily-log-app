@@ -38,4 +38,9 @@ jobs:
             --stack-name my-daily-log-app-infra \
             --capabilities CAPABILITY_IAM \
             --region $AWS_DEFAULT_REGION \
-            --resolve-s3
+            --resolve-s3 \
+            --parameter-overrides \
+              CognitoRegion=${{ secrets.AWS_DEFAULT_REGION }} \
+              CognitoUserPoolId=${{ secrets.VITE_COGNITO_USER_POOL_ID }} \
+              CognitoUserPoolWebClientId=${{ secrets.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID }} \
+              CorsOrigin=${{ secrets.CORS_ORIGIN }}
