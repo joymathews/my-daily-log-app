@@ -64,6 +64,10 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: my-daily-log-files
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
 
   LogTable:
     Type: AWS::DynamoDB::Table
