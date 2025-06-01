@@ -1,9 +1,7 @@
 name: Deploy Frontend to S3
 
 on:
-  workflow_dispatch:
-    branches:
-      - release
+  workflow_dispatch:  # Only run when manually triggered
 
 concurrency:
   group: deploy-frontend-to-s3
@@ -17,6 +15,12 @@ jobs:
         working-directory: frontend
 
     steps:
+      - name: Fail if not on release branch
+        if: github.ref != 'refs/heads/release'
+        run: |
+          echo "This workflow can only be run from the release branch."
+          exit 1
+
       - name: Checkout code
         uses: actions/checkout@v4
 
