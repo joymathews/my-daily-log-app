@@ -1,19 +1,17 @@
 const AWS = require('aws-sdk');
-
-const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME || 'my-daily-log-files';
-const DYNAMODB_TABLE_NAME = process.env.DYNAMODB_TABLE_NAME || 'DailyLogEvents';
+const { S3_BUCKET_NAME, DYNAMODB_TABLE_NAME, AWS_REGION, DYNAMODB_ENDPOINT, S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = require('./config');
 
 const s3 = new AWS.S3({
-  endpoint: process.env.S3_ENDPOINT || 'http://localhost:4566',
+  endpoint: S3_ENDPOINT,
   s3ForcePathStyle: true,
   signatureVersion: 'v4'
 });
 const dynamoDBAdmin = new AWS.DynamoDB({
-  region: process.env.AWS_REGION || 'us-east-1',
-  endpoint: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
+  region: AWS_REGION,
+  endpoint: DYNAMODB_ENDPOINT,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
   },
 });
 

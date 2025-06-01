@@ -2,25 +2,26 @@
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const path = require('path');
+const { S3_BUCKET_NAME, AWS_REGION, S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = require('./config');
 
 // Configure AWS
 AWS.config.update({
-  region: process.env.AWS_REGION || 'us-east-1',
+  region: AWS_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'dummy',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'dummy',
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
   },
 });
 
 // Configure S3 to use LocalStack
 const s3 = new AWS.S3({
-  endpoint: process.env.S3_ENDPOINT || 'http://localhost:4566',
+  endpoint: S3_ENDPOINT,
   s3ForcePathStyle: true,
   signatureVersion: 'v4'
 });
 
 // Define bucket name
-const BUCKET_NAME = process.env.S3_BUCKET_NAME || 'my-daily-log-files';
+const BUCKET_NAME = S3_BUCKET_NAME;
 const TEST_FILE_PATH = path.join(__dirname, 'test-s3.js'); // Use this script as the test file
 
 // Helper function to create the bucket if it doesn't exist
@@ -116,8 +117,8 @@ async function listFiles() {
 // Run all tests
 async function runTests() {
   console.log('ENVIRONMENT:');
-  console.log(`AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}`);
-  console.log(`S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}`);
+  console.log(`AWS_REGION: ${AWS_REGION}`);
+  console.log(`S3_ENDPOINT: ${S3_ENDPOINT}`);
   console.log(`BUCKET_NAME: ${BUCKET_NAME}`);
   
   try {
@@ -127,7 +128,7 @@ async function runTests() {
     await listFiles();
     
     console.log('\nAll S3 tests completed successfully!');
-    console.log(`You can verify the uploaded file at: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}/${BUCKET_NAME}/${uploadedKey}`);
+    console.log(`You can verify the uploaded file at: ${S3_ENDPOINT}/${BUCKET_NAME}/${uploadedKey}`);
   } catch (error) {
     console.error('\nFailed to complete S3 tests:', error);
   }

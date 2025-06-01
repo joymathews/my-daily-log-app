@@ -36,9 +36,9 @@ module.exports = function(app, deps) {
         status: overallStatus === 200 ? 'ok' : 'degraded',
         services,
         environment: {
-          AWS_REGION: process.env.AWS_REGION || 'us-east-1',
-          DYNAMODB_ENDPOINT: process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000',
-          S3_ENDPOINT: process.env.S3_ENDPOINT || 'http://localhost:4566',
+          AWS_REGION: require('../config').AWS_REGION,
+          DYNAMODB_ENDPOINT: require('../config').DYNAMODB_ENDPOINT,
+          S3_ENDPOINT: require('../config').S3_ENDPOINT,
           S3_BUCKET_NAME,
           DYNAMODB_TABLE_NAME
         }
