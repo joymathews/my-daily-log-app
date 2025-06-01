@@ -19,7 +19,7 @@
     "supertest": "^7.1.1"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "node local-bootstrap.js",
     "test": "jest --runInBand --coverage"
   },
   "engines": {

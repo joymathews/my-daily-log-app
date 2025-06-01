@@ -4,6 +4,9 @@
  * These tests mock AWS services but test the actual Express routes
  * to verify end-to-end behavior of the API endpoints.
  */
+// Loads .env for local dev; in CI, env vars are set by the workflow and .env is ignored if missing.
+require('dotenv').config();
+
 // Mock AWS services
 jest.mock('aws-sdk', () => {
   const mockDocumentClient = {

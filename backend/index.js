@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const AWS = require('aws-sdk');
@@ -14,28 +13,32 @@ const port = 3001;
 app.use(bodyParser.json());
 app.use(cors({ origin: CORS_ORIGIN }));
 
-AWS.config.update({
-  region: AWS_REGION,
-  credentials: {
+// Only set credentials if both are defined (for local dev)
+const awsConfig = { region: AWS_REGION };
+if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+  awsConfig.credentials = {
     accessKeyId: AWS_ACCESS_KEY_ID,
     secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  },
-});
+  };
+}
+AWS.config.update(awsConfig);
 
-const s3 = new AWS.S3({
-  endpoint: S3_ENDPOINT,
-  s3ForcePathStyle: true,
-  signatureVersion: 'v4'
-});
-
-const dynamoDBConfig = {
-  region: AWS_REGION,
-  endpoint: DYNAMODB_ENDPOINT,
-  credentials: {
+const s3Config = { endpoint: S3_ENDPOINT, s3ForcePathStyle: true, signatureVersion: 'v4' };
+if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+  s3Config.credentials = {
     accessKeyId: AWS_ACCESS_KEY_ID,
     secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  },
-};
+  };
+}
+const s3 = new AWS.S3(s3Config);
+
+const dynamoDBConfig = { region: AWS_REGION, endpoint: DYNAMODB_ENDPOINT };
+if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+  dynamoDBConfig.credentials = {
+    accessKeyId: AWS_ACCESS_KEY_ID,
+    secretAccessKey: AWS_SECRET_ACCESS_KEY,
+  };
+}
 const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
 const dynamoDBAdmin = new AWS.DynamoDB(dynamoDBConfig);
 
@@ -45,27 +48,32 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
   app.use(cors({ origin: CORS_ORIGIN }));
   const upload = multerLib();
 
-  AWSLib.config.update({
-    region: AWS_REGION,
-    credentials: {
+  // Only set credentials if both are defined (for local dev)
+  const awsLibConfig = { region: AWS_REGION };
+  if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+    awsLibConfig.credentials = {
       accessKeyId: AWS_ACCESS_KEY_ID,
       secretAccessKey: AWS_SECRET_ACCESS_KEY,
-    },
-  });
+    };
+  }
+  AWSLib.config.update(awsLibConfig);
 
-  const s3 = new AWSLib.S3({
-    endpoint: S3_ENDPOINT,
-    s3ForcePathStyle: true,
-    signatureVersion: 'v4',
-  });
-  const dynamoDBConfig = {
-    region: AWS_REGION,
-    endpoint: DYNAMODB_ENDPOINT,
-    credentials: {
+  const s3Config = { endpoint: S3_ENDPOINT, s3ForcePathStyle: true, signatureVersion: 'v4' };
+  if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+    s3Config.credentials = {
       accessKeyId: AWS_ACCESS_KEY_ID,
       secretAccessKey: AWS_SECRET_ACCESS_KEY,
-    },
-  };
+    };
+  }
+  const s3 = new AWSLib.S3(s3Config);
+
+  const dynamoDBConfig = { region: AWS_REGION, endpoint: DYNAMODB_ENDPOINT };
+  if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+    dynamoDBConfig.credentials = {
+      accessKeyId: AWS_ACCESS_KEY_ID,
+      secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    };
+  }
   const dynamoDB = new AWSLib.DynamoDB.DocumentClient(dynamoDBConfig);
 
   const COGNITO_ISSUER = `https://cognito-idp.${COGNITO_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}`;
