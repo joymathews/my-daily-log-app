@@ -49,119 +49,6 @@ const dynamoDBConfig = {
 const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
 const dynamoDBAdmin = new AWS.DynamoDB(dynamoDBConfig); // Dedicated admin client
 
-// Function to ensure S3 bucket exists
-async function ensureBucketExists() {
-  try {
-    console.log(`Checking if bucket ${S3_BUCKET_NAME} exists...`);
-    
-    // Try to get the bucket
-    try {
-      await s3.headBucket({ Bucket: S3_BUCKET_NAME }).promise();
-      console.log(`Bucket ${S3_BUCKET_NAME} exists.`);
-      return true; // Bucket exists
-    } catch (error) {
-      if (error.statusCode === 404) {
-        console.log(`Bucket ${S3_BUCKET_NAME} doesn't exist. Creating it...`);
-        
-        // Create the bucket
-        await s3.createBucket({ 
-          Bucket: S3_BUCKET_NAME 
-        }).promise();
-        
-        // Set public read access
-        await s3.putBucketAcl({
-          Bucket: S3_BUCKET_NAME,
-          ACL: 'public-read'
-        }).promise();
-        
-        console.log(`Bucket ${S3_BUCKET_NAME} created successfully.`);
-        return true;
-      } else {
-        console.error('Error checking bucket existence:', error);
-        return false;
-      }
-    }
-  } catch (error) {
-    console.error('Error ensuring bucket exists:', error);
-    return false;
-  }
-}
-
-// Function to ensure DynamoDB table exists
-async function ensureTableExists() {
-  const params = {
-    TableName: DYNAMODB_TABLE_NAME,
-    KeySchema: [
-      { AttributeName: 'id', KeyType: 'HASH' }, // Partition key
-    ],
-    AttributeDefinitions: [
-      { AttributeName: 'id', AttributeType: 'S' },
-      { AttributeName: 'userSub', AttributeType: 'S' }, // Add userSub for GSI
-    ],
-    ProvisionedThroughput: {
-      ReadCapacityUnits: 5,
-      WriteCapacityUnits: 5,
-    },
-    GlobalSecondaryIndexes: [
-      {
-        IndexName: 'userSub-index',
-        KeySchema: [
-          { AttributeName: 'userSub', KeyType: 'HASH' },
-        ],
-        Projection: { ProjectionType: 'ALL' },
-        ProvisionedThroughput: {
-          ReadCapacityUnits: 5,
-          WriteCapacityUnits: 5,
-        },
-      },
-    ],
-  };
-  try {
-    console.log(`Checking if DynamoDB table ${DYNAMODB_TABLE_NAME} exists...`);
-    const tables = await dynamoDBAdmin.listTables().promise();
-    if (tables.TableNames.includes(DYNAMODB_TABLE_NAME)) {
-      // Check if the GSI exists
-      const desc = await dynamoDBAdmin.describeTable({ TableName: DYNAMODB_TABLE_NAME }).promise();
-      const gsis = desc.Table.GlobalSecondaryIndexes || [];
-      const hasUserSubIndex = gsis.some(idx => idx.IndexName === 'userSub-index');
-      if (!hasUserSubIndex) {
-        console.warn(`WARNING: Table ${DYNAMODB_TABLE_NAME} exists but is missing userSub-index. Queries by user will fail. Please migrate or recreate the table with the correct index.`);
-      } else {
-        console.log(`Table ${DYNAMODB_TABLE_NAME} exists and has userSub-index.`);
-      }
-      return true;
-    } else {
-      console.log(`Table ${DYNAMODB_TABLE_NAME} doesn't exist. Creating it...`);
-      await dynamoDBAdmin.createTable(params).promise();
-      await dynamoDBAdmin.waitFor('tableExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
-      console.log(`Table ${DYNAMODB_TABLE_NAME} created successfully.`);
-      return true;
-    }
-  } catch (error) {
-    console.error('Error ensuring DynamoDB table exists:', error);
-    return false;
-  }
-}
-
-// Only start the server and initialize resources if this file is run directly
-if (require.main === module) {
-  // Call the function when the server starts
-  ensureBucketExists().catch(err => {
-    console.error('Failed to initialize S3 bucket:', err);
-  });
-
-  ensureTableExists().catch(err => {
-    console.error('Failed to initialize DynamoDB table:', err);
-  });
-
-  const appInstance = createApp();
-  appInstance.listen(port, () => {
-    console.log(`Backend server running on http://localhost:${port}`);
-    console.log(`Environment: \
-      AWS_REGION: ${process.env.AWS_REGION || 'us-east-1'}\n      DYNAMODB_ENDPOINT: ${process.env.DYNAMODB_ENDPOINT || 'http://localhost:8000'}\n      S3_ENDPOINT: ${process.env.S3_ENDPOINT || 'http://localhost:4566'}\n      S3_BUCKET_NAME: ${S3_BUCKET_NAME}\n      DYNAMODB_TABLE_NAME: ${DYNAMODB_TABLE_NAME}\n    `);
-  });
-}
-
 // Accept AWS and multer as injectable dependencies for testability
 function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
   const app = express();
@@ -371,5 +258,5 @@ function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
   return app;
 }
 
-// Export for testing
+// Export only the app factory for Lambda, local server, and tests
 module.exports = createApp;
