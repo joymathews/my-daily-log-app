@@ -28,7 +28,6 @@ Resources:
         Variables:
           S3_BUCKET_NAME: my-daily-log-files
           DYNAMODB_TABLE_NAME: DailyLogEvents
-          AWS_REGION: !Ref AWS::Region
           COGNITO_REGION: !Ref CognitoRegion
           COGNITO_USER_POOL_ID: !Ref CognitoUserPoolId
           COGNITO_USER_POOL_WEB_CLIENT_ID: !Ref CognitoUserPoolWebClientId

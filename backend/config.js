@@ -11,4 +11,5 @@ module.exports = {
   COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID,
   COGNITO_USER_POOL_WEB_CLIENT_ID: process.env.COGNITO_USER_POOL_WEB_CLIENT_ID,
   CORS_ORIGIN: process.env.CORS_ORIGIN,
+  LOCAL_DEV: typeof process.env.LOCAL_DEV !== 'undefined' ? process.env.LOCAL_DEV : 'false',
 };

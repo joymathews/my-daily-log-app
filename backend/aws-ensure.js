@@ -1,32 +1,36 @@
-const AWS = require('aws-sdk');
-const { S3_BUCKET_NAME, DYNAMODB_TABLE_NAME, AWS_REGION, DYNAMODB_ENDPOINT, S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = require('./config');
+const { S3Client, HeadBucketCommand, CreateBucketCommand, PutBucketAclCommand } = require('@aws-sdk/client-s3');
+const { DynamoDBClient, ListTablesCommand, DescribeTableCommand, CreateTableCommand, WaiterState, waitUntilTableExists } = require('@aws-sdk/client-dynamodb');
+const { S3_BUCKET_NAME, DYNAMODB_TABLE_NAME, AWS_REGION, DYNAMODB_ENDPOINT, S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, LOCAL_DEV } = require('./config');
 
-const s3 = new AWS.S3({
-  endpoint: S3_ENDPOINT,
-  s3ForcePathStyle: true,
-  signatureVersion: 'v4'
-});
-const dynamoDBAdmin = new AWS.DynamoDB({
+function isLocalEnv() {
+  return LOCAL_DEV === 'true';
+}
+
+const sharedConfig = {
   region: AWS_REGION,
-  endpoint: DYNAMODB_ENDPOINT,
-  credentials: {
+};
+if (isLocalEnv()) {
+  sharedConfig.credentials = {
     accessKeyId: AWS_ACCESS_KEY_ID,
     secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  },
-});
+  };
+}
+
+const s3 = new S3Client({ ...sharedConfig, endpoint: S3_ENDPOINT, forcePathStyle: true });
+const dynamoDBAdmin = new DynamoDBClient({ ...sharedConfig, endpoint: DYNAMODB_ENDPOINT });
 
 async function ensureBucketExists() {
   try {
     console.log(`Checking if bucket ${S3_BUCKET_NAME} exists...`);
     try {
-      await s3.headBucket({ Bucket: S3_BUCKET_NAME }).promise();
+      await s3.send(new HeadBucketCommand({ Bucket: S3_BUCKET_NAME }));
       console.log(`Bucket ${S3_BUCKET_NAME} exists.`);
       return true;
     } catch (error) {
-      if (error.statusCode === 404) {
+      if (error.$metadata && error.$metadata.httpStatusCode === 404) {
         console.log(`Bucket ${S3_BUCKET_NAME} doesn't exist. Creating it...`);
-        await s3.createBucket({ Bucket: S3_BUCKET_NAME }).promise();
-        await s3.putBucketAcl({ Bucket: S3_BUCKET_NAME, ACL: 'public-read' }).promise();
+        await s3.send(new CreateBucketCommand({ Bucket: S3_BUCKET_NAME }));
+        await s3.send(new PutBucketAclCommand({ Bucket: S3_BUCKET_NAME, ACL: 'public-read' }));
         console.log(`Bucket ${S3_BUCKET_NAME} created successfully.`);
         return true;
       } else {
@@ -63,9 +67,9 @@ async function ensureTableExists() {
   };
   try {
     console.log(`Checking if DynamoDB table ${DYNAMODB_TABLE_NAME} exists...`);
-    const tables = await dynamoDBAdmin.listTables().promise();
+    const tables = await dynamoDBAdmin.send(new ListTablesCommand({}));
     if (tables.TableNames.includes(DYNAMODB_TABLE_NAME)) {
-      const desc = await dynamoDBAdmin.describeTable({ TableName: DYNAMODB_TABLE_NAME }).promise();
+      const desc = await dynamoDBAdmin.send(new DescribeTableCommand({ TableName: DYNAMODB_TABLE_NAME }));
       const gsis = desc.Table.GlobalSecondaryIndexes || [];
       const hasUserSubIndex = gsis.some(idx => idx.IndexName === 'userSub-index');
       if (!hasUserSubIndex) {
@@ -76,8 +80,8 @@ async function ensureTableExists() {
       return true;
     } else {
       console.log(`Table ${DYNAMODB_TABLE_NAME} doesn't exist. Creating it...`);
-      await dynamoDBAdmin.createTable(params).promise();
-      await dynamoDBAdmin.waitFor('tableExists', { TableName: DYNAMODB_TABLE_NAME }).promise();
+      await dynamoDBAdmin.send(new CreateTableCommand(params));
+      await waitUntilTableExists({ client: dynamoDBAdmin, maxWaitTime: 60 }, { TableName: DYNAMODB_TABLE_NAME });
       console.log(`Table ${DYNAMODB_TABLE_NAME} created successfully.`);
       return true;
     }
