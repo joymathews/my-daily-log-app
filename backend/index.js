@@ -1,11 +1,11 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const AWS = require('aws-sdk');
 const multer = require('multer');
 const cors = require('cors');
 const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
-const { S3_BUCKET_NAME, DYNAMODB_TABLE_NAME, AWS_REGION, DYNAMODB_ENDPOINT, S3_ENDPOINT, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, COGNITO_REGION, COGNITO_USER_POOL_ID, COGNITO_APP_CLIENT_ID, CORS_ORIGIN } = require('./config');
+const { S3_BUCKET_NAME, DYNAMODB_TABLE_NAME, COGNITO_REGION, COGNITO_USER_POOL_ID, COGNITO_APP_CLIENT_ID, CORS_ORIGIN } = require('./config');
+const { createAwsClients } = require('./aws-factory');
 
 const app = express();
 const port = 3001;
@@ -13,68 +13,14 @@ const port = 3001;
 app.use(bodyParser.json());
 app.use(cors({ origin: CORS_ORIGIN }));
 
-// Only set credentials if both are defined (for local dev)
-const awsConfig = { region: AWS_REGION };
-if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
-  awsConfig.credentials = {
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  };
-}
-AWS.config.update(awsConfig);
-
-const s3Config = { endpoint: S3_ENDPOINT, s3ForcePathStyle: true, signatureVersion: 'v4' };
-if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
-  s3Config.credentials = {
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  };
-}
-const s3 = new AWS.S3(s3Config);
-
-const dynamoDBConfig = { region: AWS_REGION, endpoint: DYNAMODB_ENDPOINT };
-if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
-  dynamoDBConfig.credentials = {
-    accessKeyId: AWS_ACCESS_KEY_ID,
-    secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  };
-}
-const dynamoDB = new AWS.DynamoDB.DocumentClient(dynamoDBConfig);
-const dynamoDBAdmin = new AWS.DynamoDB(dynamoDBConfig);
-
-function createApp({ AWSLib = AWS, multerLib = multer } = {}) {
+function createApp({ AWSLib = require('aws-sdk'), multerLib = multer } = {}) {
   const app = express();
   app.use(bodyParser.json());
   app.use(cors({ origin: CORS_ORIGIN }));
   const upload = multerLib();
 
-  // Only set credentials if both are defined (for local dev)
-  const awsLibConfig = { region: AWS_REGION };
-  if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
-    awsLibConfig.credentials = {
-      accessKeyId: AWS_ACCESS_KEY_ID,
-      secretAccessKey: AWS_SECRET_ACCESS_KEY,
-    };
-  }
-  AWSLib.config.update(awsLibConfig);
-
-  const s3Config = { endpoint: S3_ENDPOINT, s3ForcePathStyle: true, signatureVersion: 'v4' };
-  if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
-    s3Config.credentials = {
-      accessKeyId: AWS_ACCESS_KEY_ID,
-      secretAccessKey: AWS_SECRET_ACCESS_KEY,
-    };
-  }
-  const s3 = new AWSLib.S3(s3Config);
-
-  const dynamoDBConfig = { region: AWS_REGION, endpoint: DYNAMODB_ENDPOINT };
-  if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
-    dynamoDBConfig.credentials = {
-      accessKeyId: AWS_ACCESS_KEY_ID,
-      secretAccessKey: AWS_SECRET_ACCESS_KEY,
-    };
-  }
-  const dynamoDB = new AWSLib.DynamoDB.DocumentClient(dynamoDBConfig);
+  // Use factory to get AWS clients
+  const { s3, dynamoDB, dynamoDBAdmin } = createAwsClients(AWSLib);
 
   const COGNITO_ISSUER = `https://cognito-idp.${COGNITO_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}`;
   const client = jwksClient({
