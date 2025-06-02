@@ -78,9 +78,17 @@ function ViewEvents({ onSignOut }) {
                 <p className="event-content">{event.event}</p>
                 {event.fileUrl && (
                   <div className="event-attachment">
-                    <a href={event.fileUrl} target="_blank" rel="noopener noreferrer">
-                      View Attachment
-                    </a>
+                    {event.fileUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? (
+                      <img
+                        src={event.fileUrl}
+                        alt={event.originalFileName || 'Event Attachment'}
+                        style={{ maxWidth: '200px', maxHeight: '200px', display: 'block', marginTop: '8px' }}
+                      />
+                    ) : (
+                      <a href={event.fileUrl} target="_blank" rel="noopener noreferrer">
+                        View Attachment
+                      </a>
+                    )}
                   </div>
                 )}
               </li>

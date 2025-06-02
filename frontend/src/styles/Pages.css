@@ -284,6 +284,24 @@ button:hover {
   border-top: 1px dashed var(--color-light-gray);
 }
 
+.event-attachment img {
+  max-width: 200px;
+  max-height: 200px;
+  display: block;
+  margin-top: 8px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  object-fit: contain;
+}
+
+.event-attachment a {
+  display: inline-block;
+  margin-top: 8px;
+  color: #1976d2;
+  text-decoration: underline;
+  font-size: 0.95em;
+}
+
 .event-attachment a {
   display: inline-flex;
   align-items: center;

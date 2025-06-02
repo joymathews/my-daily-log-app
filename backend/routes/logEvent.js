@@ -17,6 +17,11 @@ module.exports = function(app, deps) {
 
     console.log('Received event:', event);
     if (file) {
+      // Only allow image files (backend restriction)
+      if (!file.mimetype.startsWith('image/')) {
+        res.status(400).send('Only image files are allowed');
+        return;
+      }
       console.log('Received file:', file.originalname);
     } else {
       console.log('No file provided');
@@ -29,6 +34,11 @@ module.exports = function(app, deps) {
         timestamp: new Date().toISOString(),
         userSub
       };
+      // If a file is uploaded, add the S3 key and original filename to the item
+      if (file) {
+        item.s3Key = `${item.id}-${file.originalname}`;
+        item.originalFileName = file.originalname;
+      }
       const params = {
         TableName: DYNAMODB_TABLE_NAME,
         Item: item
@@ -39,7 +49,7 @@ module.exports = function(app, deps) {
         try {
           const s3Params = {
             Bucket: S3_BUCKET_NAME,
-            Key: `${item.id}-${file.originalname}`,
+            Key: item.s3Key,
             Body: file.buffer,
             ContentType: file.mimetype
           };

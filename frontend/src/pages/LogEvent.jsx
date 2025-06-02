@@ -12,6 +12,17 @@ function LogEvent({ onSignOut }) {
   const [isLoading, setIsLoading] = useState(false);
   const formRef = useRef(null);
 
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile && !selectedFile.type.startsWith('image/')) {
+      setValidationError('Only image files are allowed');
+      setFile(null);
+      return;
+    }
+    setValidationError('');
+    setFile(selectedFile);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setValidationError('');
@@ -74,7 +85,8 @@ function LogEvent({ onSignOut }) {
                 type="file"
                 name="file"
                 data-testid="file-input"
-                onChange={(e) => setFile(e.target.files[0])}
+                accept="image/*"
+                onChange={handleFileChange}
               />
             </div>
             
