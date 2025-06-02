@@ -1,52 +1,45 @@
-const AWS = require('aws-sdk');
+// AWS SDK v3 migration
+const { S3Client } = require('@aws-sdk/client-s3');
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient } = require('@aws-sdk/lib-dynamodb');
 const {
   AWS_REGION, DYNAMODB_ENDPOINT, S3_ENDPOINT,
   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, LOCAL_DEV
 } = require('./config');
 
-// Simple local environment check using config.js value
 function isLocalEnv() {
   return LOCAL_DEV === 'true';
 }
 
-function createAwsClients(AWSLib = AWS) {
-  const baseConfig = { region: AWS_REGION };
-
-  // Only set credentials for local/dev (assume they are set if LOCAL_DEV is true)
-  if (isLocalEnv()) {
-    baseConfig.credentials = {
-      accessKeyId: AWS_ACCESS_KEY_ID,
-      secretAccessKey: AWS_SECRET_ACCESS_KEY,
-    };
-  }
-
-  AWSLib.config.update(baseConfig);
-
-  const s3Config = {
-    endpoint: S3_ENDPOINT,
-    s3ForcePathStyle: true,
-    signatureVersion: 'v4',
-    region: AWS_REGION
+function createAwsClients() {
+  // Shared credentials/config
+  const sharedConfig = {
+    region: AWS_REGION,
   };
   if (isLocalEnv()) {
-    s3Config.credentials = {
+    sharedConfig.credentials = {
       accessKeyId: AWS_ACCESS_KEY_ID,
       secretAccessKey: AWS_SECRET_ACCESS_KEY,
     };
   }
-  const s3 = new AWSLib.S3(s3Config);
 
-  const dynamoDBConfig = { region: AWS_REGION, endpoint: DYNAMODB_ENDPOINT };
-  if (isLocalEnv()) {
-    dynamoDBConfig.credentials = {
-      accessKeyId: AWS_ACCESS_KEY_ID,
-      secretAccessKey: AWS_SECRET_ACCESS_KEY,
-    };
-  }
-  const dynamoDB = new AWSLib.DynamoDB.DocumentClient(dynamoDBConfig);
-  const dynamoDBAdmin = new AWSLib.DynamoDB(dynamoDBConfig);
+  // S3 Client
+  const s3Config = {
+    ...sharedConfig,
+    endpoint: S3_ENDPOINT,
+    forcePathStyle: true, // v3: s3ForcePathStyle -> forcePathStyle
+  };
+  const s3 = new S3Client(s3Config);
 
-  return { s3, dynamoDB, dynamoDBAdmin };
+  // DynamoDB Client
+  const dynamoConfig = {
+    ...sharedConfig,
+    endpoint: DYNAMODB_ENDPOINT,
+  };
+  const dynamoDBClient = new DynamoDBClient(dynamoConfig);
+  const dynamoDB = DynamoDBDocumentClient.from(dynamoDBClient);
+
+  return { s3, dynamoDB, dynamoDBClient };
 }
 
 module.exports = { createAwsClients, isLocalEnv };

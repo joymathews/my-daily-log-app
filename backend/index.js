@@ -13,14 +13,14 @@ const port = 3001;
 app.use(bodyParser.json());
 app.use(cors({ origin: CORS_ORIGIN }));
 
-function createApp({ AWSLib = require('aws-sdk'), multerLib = multer } = {}) {
+function createApp({ } = {}) {
   const app = express();
   app.use(bodyParser.json());
   app.use(cors({ origin: CORS_ORIGIN }));
-  const upload = multerLib();
+  const upload = multer();
 
-  // Use factory to get AWS clients
-  const { s3, dynamoDB, dynamoDBAdmin } = createAwsClients(AWSLib);
+  // Use v3 AWS clients
+  const { s3, dynamoDB } = createAwsClients();
 
   const COGNITO_ISSUER = `https://cognito-idp.${COGNITO_REGION}.amazonaws.com/${COGNITO_USER_POOL_ID}`;
   const client = jwksClient({

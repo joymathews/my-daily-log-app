@@ -1,4 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
+const { PutObjectCommand } = require('@aws-sdk/client-s3');
+const { PutCommand } = require('@aws-sdk/lib-dynamodb');
 
 module.exports = function(app, deps) {
   const { authenticateJWT, upload, dynamoDB, s3, S3_BUCKET_NAME, DYNAMODB_TABLE_NAME } = deps;
@@ -21,28 +23,29 @@ module.exports = function(app, deps) {
     }
 
     try {
+      const item = {
+        id: uuidv4(),
+        event: event || 'No description provided',
+        timestamp: new Date().toISOString(),
+        userSub
+      };
       const params = {
         TableName: DYNAMODB_TABLE_NAME,
-        Item: {
-          id: uuidv4(),
-          event: event || 'No description provided',
-          timestamp: new Date().toISOString(),
-          userSub
-        },
+        Item: item
       };
       console.log('Saving event to DynamoDB:', params);
-      await dynamoDB.put(params).promise();
+      await dynamoDB.send(new PutCommand(params));
       if (file) {
         try {
           const s3Params = {
             Bucket: S3_BUCKET_NAME,
-            Key: `${params.Item.id}-${file.originalname}`,
+            Key: `${item.id}-${file.originalname}`,
             Body: file.buffer,
             ContentType: file.mimetype
           };
           console.log('Uploading file to S3:', s3Params);
-          const uploadResult = await s3.upload(s3Params).promise();
-          console.log('File uploaded successfully:', uploadResult.Location);
+          const uploadResult = await s3.send(new PutObjectCommand(s3Params));
+          console.log('File uploaded successfully:', uploadResult.Location || uploadResult.ETag);
         } catch (uploadError) {
           console.error('Error uploading file to S3:', uploadError);
           res.status(500).send('File upload failed');
