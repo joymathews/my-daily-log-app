@@ -55,11 +55,12 @@ jobs:
             --exclude "index.html" \
             --delete \
             --cache-control "public, max-age=31536000, immutable"
-          # Set correct content-type for JS files
-          for file in $(find dist -type f -name '*.js'); do
-            aws s3 cp "$file" s3://${{ secrets.AWS_S3_BUCKET }}/$(basename "$file") \
+          # Set correct content-type for JS files and preserve directory structure
+          find dist -type f -name '*.js' | while read file; do
+            key="${file#dist/}"
+            aws s3 cp "$file" "s3://${{ secrets.AWS_S3_BUCKET }}/$key" \
               --cache-control "public, max-age=31536000, immutable" \
-              --content-type "application/javascript";
+              --content-type "application/javascript"
           done
 
       - name: Upload index.html with short cache
