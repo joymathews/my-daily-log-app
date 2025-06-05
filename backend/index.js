@@ -17,7 +17,8 @@ function createApp({ } = {}) {
   const app = express();
   app.use(bodyParser.json());
   app.use(cors({ origin: CORS_ORIGIN }));
-  const upload = multer();
+  // Explicitly use memoryStorage for multer
+  const upload = multer({ storage: multer.memoryStorage() });
 
   // Use v3 AWS clients
   const { s3, dynamoDB } = createAwsClients();
