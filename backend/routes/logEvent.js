@@ -36,7 +36,9 @@ module.exports = function(app, deps) {
       };
       // If a file is uploaded, add the S3 key and original filename to the item
       if (file) {
-        item.s3Key = `${item.id}-${file.originalname}`;
+        // Sanitize the original filename to allow only safe characters
+        const safeFileName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+        item.s3Key = `${item.id}-${safeFileName}`;
         item.originalFileName = file.originalname;
       }
       const params = {
