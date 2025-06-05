@@ -23,8 +23,8 @@ jest.mock('multer', () => {
       if (req.headers['x-with-file'] === 'true') {
         req.file = {
           buffer: Buffer.from('test file content'),
-          originalname: 'test-file.txt',
-          mimetype: 'text/plain'
+          originalname: 'test-file.jpg', // Use an image extension
+          mimetype: 'image/jpeg' // Use an image mimetype
         };
       }
       next();

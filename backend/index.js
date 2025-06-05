@@ -4,7 +4,7 @@ const multer = require('multer');
 const cors = require('cors');
 const jwksClient = require('jwks-rsa');
 const jwt = require('jsonwebtoken');
-const { S3_BUCKET_NAME, DYNAMODB_TABLE_NAME, COGNITO_REGION, COGNITO_USER_POOL_ID, COGNITO_APP_CLIENT_ID, CORS_ORIGIN } = require('./config');
+const { S3_BUCKET_NAME, DYNAMODB_TABLE_NAME, COGNITO_REGION, COGNITO_USER_POOL_ID, COGNITO_APP_CLIENT_ID, CORS_ORIGIN, LOCAL_DEV, S3_ENDPOINT } = require('./config');
 const { createAwsClients } = require('./aws-factory');
 
 const app = express();
@@ -75,7 +75,9 @@ function createApp({ } = {}) {
     dynamoDB,
     s3,
     S3_BUCKET_NAME,
-    DYNAMODB_TABLE_NAME
+    DYNAMODB_TABLE_NAME,
+    LOCAL_DEV,
+    S3_ENDPOINT
   };
   require('./routes/logEvent')(app, deps);
   require('./routes/viewEvents')(app, deps);
