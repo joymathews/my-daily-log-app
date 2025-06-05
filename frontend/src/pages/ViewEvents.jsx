@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import env from '../config/env';
 import Header from '../components/Header';
@@ -66,14 +66,15 @@ function ViewEvents({ onSignOut }) {
     return Object.keys(grouped).sort((a, b) => b.localeCompare(a));
   };
 
+  // Memoize grouped events and sorted day keys
+  const grouped = useMemo(() => groupEventsByDay(events), [events]);
+  const sortedDayKeys = useMemo(() => getSortedDayKeys(grouped), [grouped]);
+
   // Expand/collapse state for each day
   const [expandedDays, setExpandedDays] = useState({});
   const toggleDay = (dayKey) => {
     setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }));
   };
-
-  const grouped = groupEventsByDay(events);
-  const sortedDayKeys = getSortedDayKeys(grouped);
 
   return (
     <>
@@ -125,7 +126,7 @@ function ViewEvents({ onSignOut }) {
                                 <img
                                   src={event.fileUrl}
                                   alt={event.originalFileName || 'Event Attachment'}
-                                  style={{ maxWidth: '200px', maxHeight: '200px', display: 'block', marginTop: '8px' }}
+                                  className="event-attachment-img"
                                 />
                               ) : (
                                 <a href={event.fileUrl} target="_blank" rel="noopener noreferrer">

@@ -19,18 +19,19 @@ module.exports = function(app, deps) {
 
       // For local dev, use direct URL; for prod, use pre-signed URL
       const eventsWithFileUrl = await Promise.all(events.map(async event => {
-        if (event.s3Key) {
+        const eventClone = { ...event };
+        if (eventClone.s3Key) {
           if (LOCAL_DEV === 'true') {
-            event.fileUrl = `${S3_ENDPOINT.replace(/\/$/, '')}/${S3_BUCKET_NAME}/${event.s3Key}`;
+            eventClone.fileUrl = `${S3_ENDPOINT.replace(/\/$/, '')}/${S3_BUCKET_NAME}/${eventClone.s3Key}`;
           } else {
             const command = new GetObjectCommand({
               Bucket: S3_BUCKET_NAME,
-              Key: event.s3Key
+              Key: eventClone.s3Key
             });
-            event.fileUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+            eventClone.fileUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
           }
         }
-        return event;
+        return eventClone;
       }));
 
       res.status(200).json(eventsWithFileUrl);

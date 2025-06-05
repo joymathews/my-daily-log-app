@@ -284,7 +284,7 @@ button:hover {
   border-top: 1px dashed var(--color-light-gray);
 }
 
-.event-attachment img {
+.event-attachment-img {
   max-width: 200px;
   max-height: 200px;
   display: block;
@@ -295,23 +295,21 @@ button:hover {
 }
 
 .event-attachment a {
-  display: inline-block;
-  margin-top: 8px;
-  color: #1976d2;
-  text-decoration: underline;
-  font-size: 0.95em;
-}
-
-.event-attachment a {
   display: inline-flex;
   align-items: center;
+  padding: 0.5rem 0.75rem;
+  background-color: #f4f6f8;
+  border-radius: 4px;
+  font-size: 0.9rem;
   color: var(--color-primary);
   text-decoration: none;
   font-weight: 500;
-  transition: color var(--transition-fast);
+  transition: all 0.2s ease, color var(--transition-fast);
+  margin-top: 8px;
 }
 
 .event-attachment a:hover {
+  background-color: #e8eef3;
   color: var(--color-primary-dark);
   text-decoration: underline;
 }
@@ -351,13 +349,17 @@ button:hover {
   background-color: #f4f6f8;
   border-radius: 4px;
   font-size: 0.9rem;
-  color: #3498db;
-  transition: all 0.2s ease;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease, color var(--transition-fast);
+  margin-top: 8px;
 }
 
 .event-attachment a:hover {
   background-color: #e8eef3;
-  text-decoration: none;
+  color: var(--color-primary-dark);
+  text-decoration: underline;
 }
 
 /* Improved button styles with hover effect */
@@ -410,6 +412,7 @@ button:disabled {
 .event-day-toggle:hover, .event-day-toggle:focus {
   background: #f4f6f8;
   outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary, #3498db);
 }
 .event-day-label {
   flex: 1;
