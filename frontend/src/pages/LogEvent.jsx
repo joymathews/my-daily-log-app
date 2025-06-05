@@ -3,6 +3,7 @@ import axios from 'axios';
 import env from '../config/env';
 import Header from '../components/Header';
 import '../styles/Pages.css';
+import imageCompression from 'browser-image-compression';
 
 function LogEvent({ onSignOut }) {
   const [event, setEvent] = useState('');
@@ -12,7 +13,7 @@ function LogEvent({ onSignOut }) {
   const [isLoading, setIsLoading] = useState(false);
   const formRef = useRef(null);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile && !selectedFile.type.startsWith('image/')) {
       setValidationError('Only image files are allowed');
@@ -20,7 +21,32 @@ function LogEvent({ onSignOut }) {
       return;
     }
     setValidationError('');
-    setFile(selectedFile);
+
+    if (selectedFile) {
+      // Compress the image before setting it
+      try {
+        const compressedFile = await imageCompression(selectedFile, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+          fileType: 'image/jpeg'
+        });
+
+        // Ensure the file has a .jpg extension
+        const finalFile = new File(
+          [compressedFile],
+          selectedFile.name.replace(/\.[^/.]+$/, '') + '.jpg',
+          { type: 'image/jpeg' }
+        );
+
+        setFile(finalFile);
+      } catch (err) {
+        setValidationError('Image compression failed');
+        setFile(null);
+      }
+    } else {
+      setFile(null);
+    }
   };
 
   const handleSubmit = async (e) => {

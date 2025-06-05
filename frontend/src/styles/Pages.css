@@ -388,3 +388,40 @@ button:disabled {
   transform: none;
   box-shadow: none;
 }
+
+/* Day group toggle button for event grouping */
+.event-day-toggle {
+  width: 100%;
+  background: none;
+  color: var(--color-secondary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: left;
+  padding: 1rem 0.5rem;
+  border: none;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 0.5rem;
+}
+.event-day-toggle:hover, .event-day-toggle:focus {
+  background: #f4f6f8;
+  outline: none;
+}
+.event-day-label {
+  flex: 1;
+}
+.event-day-count {
+  color: var(--color-gray);
+  font-size: 0.95em;
+  margin-left: 0.5em;
+}
+.event-day-arrow {
+  margin-left: 1em;
+  font-size: 1.2em;
+  color: var(--color-primary);
+  transition: transform 0.2s;
+}

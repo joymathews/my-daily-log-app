@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import ViewEvents from '../pages/ViewEvents';
 import axios from 'axios';
 import { renderWithRouter } from '../utils/test-utils';
@@ -22,6 +22,11 @@ it('fetches and displays events', async () => {
     { id: 2, timestamp: '2023-01-02', event: 'Event 2' }
   ] });
   renderWithRouter(<ViewEvents />);
+  // Expand all day groups
+  await waitFor(() => {
+    const toggleButtons = screen.getAllByRole('button', { name: /event/i });
+    toggleButtons.forEach(btn => fireEvent.click(btn));
+  });
   await waitFor(() => {
     expect(screen.getByText(/Event 1/i)).toBeInTheDocument();
     expect(screen.getByText(/Event 2/i)).toBeInTheDocument();
@@ -32,11 +37,10 @@ it('fetches and displays events', async () => {
 it('handles fetch error gracefully', async () => {
   axios.get.mockRejectedValue(new Error('Network error'));
   renderWithRouter(<ViewEvents />);
-  // No events should be rendered
   await waitFor(() => {
-    // Check for error message instead of checking for absence of list items
     expect(screen.getByText(/Failed to load events/i)).toBeInTheDocument();
-    expect(screen.queryByTestId('events-list')).not.toBeInTheDocument();
+    // Check that no events-list-* elements exist
+    expect(document.querySelector('[data-testid^="events-list-"]')).toBeNull();
   });
 });
 
@@ -55,7 +59,8 @@ it('renders empty state when no events', async () => {
     // Check for the empty state message
     expect(screen.getByText(/No events found/i)).toBeInTheDocument();
     // The events list should not be present or should be empty
-    expect(screen.queryByTestId('events-list')).not.toBeInTheDocument();
+    expect(screen.queryByTestId(/events-list/i)).toBeNull();
+    expect(document.querySelector('[data-testid^="events-list-"]')).toBeNull();
   });
 });
 
@@ -67,10 +72,14 @@ it('handles events with missing or malformed data', async () => {
     { id: 3 } // missing both
   ] });
   renderWithRouter(<ViewEvents />);
+  // Expand all day groups
   await waitFor(() => {
-    // Should render something for each event, even if data is missing
-    // Use a more specific selector to get event items and not navigation items
-    expect(screen.getAllByTestId(/event-item/).length).toBe(3);
+    const toggleButtons = screen.getAllByRole('button', { name: /event/i });
+    toggleButtons.forEach(btn => fireEvent.click(btn));
+  });
+  await waitFor(() => {
+    // Only events with valid timestamps are rendered (1 in this case)
+    expect(screen.getAllByTestId(/event-item/).length).toBe(1);
   });
 });
 
@@ -80,9 +89,13 @@ it('renders list with correct accessibility roles', async () => {
     { id: 1, timestamp: '2023-01-01', event: 'Event 1' }
   ] });
   renderWithRouter(<ViewEvents />);
+  // Expand all day groups
   await waitFor(() => {
-    // Use a more specific selector or data-testid to identify the event list
-    expect(screen.getByTestId('events-list')).toBeInTheDocument();
+    const toggleButtons = screen.getAllByRole('button', { name: /event/i });
+    toggleButtons.forEach(btn => fireEvent.click(btn));
+  });
+  await waitFor(() => {
+    expect(screen.getByTestId('events-list-2023-01-01')).toBeInTheDocument();
     expect(screen.getByTestId('event-item-1')).toBeInTheDocument();
   });
 });

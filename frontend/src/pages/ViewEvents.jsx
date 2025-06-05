@@ -49,12 +49,37 @@ function ViewEvents({ onSignOut }) {
       return 'Invalid date';
     }
   };
+  // Group events by day (YYYY-MM-DD)
+  const groupEventsByDay = (events) => {
+    return events.reduce((groups, event) => {
+      const date = new Date(event.timestamp);
+      if (isNaN(date.getTime())) return groups;
+      const dayKey = date.toISOString().slice(0, 10); // YYYY-MM-DD
+      if (!groups[dayKey]) groups[dayKey] = [];
+      groups[dayKey].push(event);
+      return groups;
+    }, {});
+  };
+
+  // Sort day keys latest-first
+  const getSortedDayKeys = (grouped) => {
+    return Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+  };
+
+  // Expand/collapse state for each day
+  const [expandedDays, setExpandedDays] = useState({});
+  const toggleDay = (dayKey) => {
+    setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }));
+  };
+
+  const grouped = groupEventsByDay(events);
+  const sortedDayKeys = getSortedDayKeys(grouped);
+
   return (
     <>
       <Header onSignOut={onSignOut} />
       <main className="page-container">
         <h2 className="page-title fade-in">View Events</h2>
-        
         {loading ? (
           <div className="loading">
             <div className="spinner" role="status" aria-label="Loading events"></div>
@@ -65,35 +90,57 @@ function ViewEvents({ onSignOut }) {
         ) : events.length === 0 ? (
           <div className="no-events fade-in">
             <p>No events found. Start by logging your first event!</p>
-          </div>        ) : (
-          <ul className="events-list" data-testid="events-list">
-            {events.map((event, index) => (
-              <li 
-                key={event.id} 
-                className="event-item slide-in-bottom" 
-                data-testid={`event-item-${event.id}`}
-                style={{ '--animation-delay': `${index * 0.05}s` }}
-              >
-                <span className="event-timestamp">{formatDate(event.timestamp)}</span>
-                <p className="event-content">{event.event}</p>
-                {event.fileUrl && (
-                  <div className="event-attachment">
-                    {event.fileUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? (
-                      <img
-                        src={event.fileUrl}
-                        alt={event.originalFileName || 'Event Attachment'}
-                        style={{ maxWidth: '200px', maxHeight: '200px', display: 'block', marginTop: '8px' }}
-                      />
-                    ) : (
-                      <a href={event.fileUrl} target="_blank" rel="noopener noreferrer">
-                        View Attachment
-                      </a>
-                    )}
-                  </div>
+          </div>
+        ) : (
+          <div className="events-grouped-list" data-testid="events-grouped-list">
+            {sortedDayKeys.map((dayKey, groupIdx) => (
+              <div key={dayKey} className="event-day-group fade-in" style={{ '--animation-delay': `${groupIdx * 0.08}s` }}>
+                <button
+                  className="event-day-toggle"
+                  onClick={() => toggleDay(dayKey)}
+                  aria-expanded={!!expandedDays[dayKey]}
+                  aria-controls={`event-list-${dayKey}`}
+                >
+                  <span className="event-day-label">{new Date(dayKey).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  <span className="event-day-count">({grouped[dayKey].length} event{grouped[dayKey].length > 1 ? 's' : ''})</span>
+                  <span className="event-day-arrow">{expandedDays[dayKey] ? '▲' : '▼'}</span>
+                </button>
+                {expandedDays[dayKey] && (
+                  <ul className="events-list" id={`event-list-${dayKey}`} data-testid={`events-list-${dayKey}`}>
+                    {grouped[dayKey]
+                      .slice()
+                      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                      .map((event, index) => (
+                        <li
+                          key={event.id}
+                          className="event-item slide-in-bottom"
+                          data-testid={`event-item-${event.id}`}
+                          style={{ '--animation-delay': `${index * 0.05}s` }}
+                        >
+                          <span className="event-timestamp">{formatDate(event.timestamp)}</span>
+                          <p className="event-content">{event.event}</p>
+                          {event.fileUrl && (
+                            <div className="event-attachment">
+                              {event.fileUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? (
+                                <img
+                                  src={event.fileUrl}
+                                  alt={event.originalFileName || 'Event Attachment'}
+                                  style={{ maxWidth: '200px', maxHeight: '200px', display: 'block', marginTop: '8px' }}
+                                />
+                              ) : (
+                                <a href={event.fileUrl} target="_blank" rel="noopener noreferrer">
+                                  View Attachment
+                                </a>
+                              )}
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                  </ul>
                 )}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </main>
     </>
