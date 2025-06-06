@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import env from '../config/env';
 import '../styles/CognitoShared.css';
-import { COGNITO_ID_TOKEN, COGNITO_ACCESS_TOKEN, COGNITO_REFRESH_TOKEN, COGNITO_USERNAME, clearCognitoStorage } from '../utils/cognitoToken';
+import { COGNITO_ID_TOKEN, COGNITO_ACCESS_TOKEN, COGNITO_REFRESH_TOKEN, COGNITO_USERNAME, clearCognitoStorage, isTokenExpired } from '../utils/cognitoToken';
 
 // Helper to sanitize error messages (basic)
 function sanitize(str) {
@@ -15,16 +15,6 @@ function CognitoLogin({ onLogin }) {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  // Check if token is expired (simple check for exp in JWT)
-  function isTokenExpired(token) {
-    if (!token) return true;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.exp * 1000 < Date.now();
-    } catch {
-      return true;
-    }
-  }
 
   // On mount, check for expired session and clear if needed
   React.useEffect(() => {
