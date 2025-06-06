@@ -57,6 +57,7 @@ function CognitoLogin({ onLogin }) {
           localStorage.setItem('cognito_id_token', result.getIdToken().getJwtToken());
           localStorage.setItem('cognito_access_token', result.getAccessToken().getJwtToken());
           localStorage.setItem('cognito_refresh_token', result.getRefreshToken().getToken());
+          localStorage.setItem('cognito_username', username); // Store username for refresh
           setMessage('Login successful!');
           if (onLogin) onLogin();
           navigate('/'); // Redirect to home after login
