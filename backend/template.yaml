@@ -73,6 +73,18 @@ Resources:
           Properties:
             Path: /{proxy+}
             Method: ANY
+            RestApiId: !Ref LogApi
+
+  LogApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      BinaryMediaTypes:
+        - multipart/form-data
+        - image/jpeg
+        - image/png
+        - image/gif
+        - application/octet-stream
 
   LogBucket:
     Type: AWS::S3::Bucket
