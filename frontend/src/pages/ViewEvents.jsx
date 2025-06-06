@@ -122,7 +122,7 @@ function ViewEvents({ onSignOut }) {
                           <p className="event-content">{event.event}</p>
                           {event.fileUrl && (
                             <div className="event-attachment">
-                              {event.fileUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? (
+                              {event.fileUrl.split('?')[0].match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i) ? (
                                 <img
                                   src={event.fileUrl}
                                   alt={event.originalFileName || 'Event Attachment'}
