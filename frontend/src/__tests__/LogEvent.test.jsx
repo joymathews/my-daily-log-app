@@ -4,6 +4,7 @@ import { screen, fireEvent, waitFor } from '@testing-library/react';
 import LogEvent from '../pages/LogEvent';
 import axios from 'axios';
 import { renderWithRouter } from '../utils/test-utils';
+import * as cognitoTokenUtils from '../utils/cognitoToken';
 
 jest.mock('axios');
 
@@ -12,7 +13,18 @@ beforeAll(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
 });
 afterAll(() => {
-  console.error.mockRestore();
+  jest.restoreAllMocks();
+});
+
+beforeEach(() => {
+  // Mock authentication: set a valid token and username
+  localStorage.setItem('cognito_id_token', 'valid.token');
+  localStorage.setItem('cognito_username', 'testuser');
+  // Mock getValidIdToken to always resolve to a valid token
+  jest.spyOn(cognitoTokenUtils, 'getValidIdToken').mockResolvedValue('valid.token');
+});
+afterEach(() => {
+  jest.restoreAllMocks();
 });
 
 // This test checks that the event logging page shows the form fields a user needs to log an event.

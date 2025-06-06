@@ -7,6 +7,18 @@ const poolData = {
   ClientId: env.VITE_COGNITO_USER_POOL_WEB_CLIENT_ID
 };
 
+export const COGNITO_ID_TOKEN = 'cognito_id_token';
+export const COGNITO_ACCESS_TOKEN = 'cognito_access_token';
+export const COGNITO_REFRESH_TOKEN = 'cognito_refresh_token';
+export const COGNITO_USERNAME = 'cognito_username';
+
+export function clearCognitoStorage() {
+  localStorage.removeItem(COGNITO_ID_TOKEN);
+  localStorage.removeItem(COGNITO_ACCESS_TOKEN);
+  localStorage.removeItem(COGNITO_REFRESH_TOKEN);
+  localStorage.removeItem(COGNITO_USERNAME);
+}
+
 export function isTokenExpired(token) {
   if (!token) return true;
   try {
@@ -35,22 +47,29 @@ export function refreshSession(username, refreshToken) {
 
 // Wrapper for fetch/axios with auto token refresh
 export async function getValidIdToken() {
-  let idToken = localStorage.getItem('cognito_id_token');
-  const refreshToken = localStorage.getItem('cognito_refresh_token');
-  const username = localStorage.getItem('cognito_username');
-  if (isTokenExpired(idToken) && refreshToken && username) {
-    try {
-      const tokens = await refreshSession(username, refreshToken);
-      localStorage.setItem('cognito_id_token', tokens.idToken);
-      localStorage.setItem('cognito_access_token', tokens.accessToken);
-      if (tokens.refreshToken) {
-        localStorage.setItem('cognito_refresh_token', tokens.refreshToken);
+  let idToken = localStorage.getItem(COGNITO_ID_TOKEN);
+  const refreshToken = localStorage.getItem(COGNITO_REFRESH_TOKEN);
+  const username = localStorage.getItem(COGNITO_USERNAME);
+  if (isTokenExpired(idToken)) {
+    if (refreshToken && username) {
+      try {
+        const tokens = await refreshSession(username, refreshToken);
+        localStorage.setItem(COGNITO_ID_TOKEN, tokens.idToken);
+        localStorage.setItem(COGNITO_ACCESS_TOKEN, tokens.accessToken);
+        if (tokens.refreshToken) {
+          localStorage.setItem(COGNITO_REFRESH_TOKEN, tokens.refreshToken);
+        }
+        idToken = tokens.idToken;
+      } catch (err) {
+        clearCognitoStorage();
+        window.location.href = '/login';
+        throw err;
       }
-      idToken = tokens.idToken;
-    } catch (err) {
-      localStorage.clear();
+    } else {
+      // No refresh token or username, treat as unauthenticated
+      clearCognitoStorage();
       window.location.href = '/login';
-      throw err;
+      throw new Error('Session expired. Please log in again.');
     }
   }
   return idToken;

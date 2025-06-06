@@ -1,17 +1,14 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { COGNITO_ID_TOKEN, clearCognitoStorage } from '../utils/cognitoToken';
 import '../styles/Header.css';
 
 function Header({ onSignOut }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const isAuthenticated = localStorage.getItem('cognito_id_token');
+  const isAuthenticated = localStorage.getItem(COGNITO_ID_TOKEN);
   const handleSignOut = () => {
-    // Always clear local storage tokens
-    localStorage.removeItem('cognito_id_token');
-    localStorage.removeItem('cognito_access_token');
-    localStorage.removeItem('cognito_refresh_token');
-    
+    clearCognitoStorage();
     // If parent provided onSignOut callback, call it
     if (onSignOut) {
       onSignOut();
