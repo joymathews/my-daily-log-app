@@ -4,6 +4,7 @@ import env from '../config/env';
 import Header from '../components/Header';
 import '../styles/Pages.css';
 import imageCompression from 'browser-image-compression';
+import { getValidIdToken } from '../utils/cognitoToken';
 
 function LogEvent({ onSignOut }) {
   const [event, setEvent] = useState('');
@@ -64,7 +65,7 @@ function LogEvent({ onSignOut }) {
 
     try {
       setIsLoading(true);
-      const token = localStorage.getItem('cognito_id_token');
+      const token = await getValidIdToken();
       const response = await axios.post(`${env.VITE_API_BASE_URL}/log-event`, formData, {
         headers: {
           'Authorization': `Bearer ${token}`

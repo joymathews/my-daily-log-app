@@ -11,6 +11,7 @@ import env from './config/env';
 import './styles/Utilities.css';
 import './styles/Pages.css';
 import './styles/Animation.css';
+import { COGNITO_ID_TOKEN } from './utils/cognitoToken';
 
 // Utility to get CognitoUserPool instance
 function getUserPool() {
@@ -27,7 +28,7 @@ function ProtectedRoute({ children }) {
   
   useEffect(() => {
     const user = userPool.getCurrentUser();
-    const hasToken = localStorage.getItem('cognito_id_token');
+    const hasToken = localStorage.getItem(COGNITO_ID_TOKEN);
     setIsAuthenticated(!!(user && hasToken));
   }, []);
   
@@ -61,7 +62,7 @@ function App() {
   // Only check authentication status on mount
   useEffect(() => {
     const user = userPool.getCurrentUser();
-    const hasToken = localStorage.getItem('cognito_id_token');
+    const hasToken = localStorage.getItem(COGNITO_ID_TOKEN);
     setIsAuthenticated(!!(user && hasToken));
     if (user && hasToken) {
       fetchAndSetUserName();

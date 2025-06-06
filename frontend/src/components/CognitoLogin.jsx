@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import env from '../config/env';
 import '../styles/CognitoShared.css';
+import { COGNITO_ID_TOKEN, COGNITO_ACCESS_TOKEN, COGNITO_REFRESH_TOKEN, COGNITO_USERNAME, clearCognitoStorage, isTokenExpired } from '../utils/cognitoToken';
 
 // Helper to sanitize error messages (basic)
 function sanitize(str) {
@@ -14,26 +15,14 @@ function CognitoLogin({ onLogin }) {
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  // Check if token is expired (simple check for exp in JWT)
-  function isTokenExpired(token) {
-    if (!token) return true;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.exp * 1000 < Date.now();
-    } catch {
-      return true;
-    }
-  }
 
   // On mount, check for expired session and clear if needed
   React.useEffect(() => {
-    const idToken = localStorage.getItem('cognito_id_token');
+    const idToken = localStorage.getItem(COGNITO_ID_TOKEN);
     
     // Clear any existing tokens
     if (idToken && isTokenExpired(idToken)) {
-      localStorage.removeItem('cognito_id_token');
-      localStorage.removeItem('cognito_access_token');
-      localStorage.removeItem('cognito_refresh_token');
+      clearCognitoStorage();
     } else if (idToken) {
       // If we have a valid token, redirect to the home page
       if (onLogin) onLogin();
@@ -54,9 +43,10 @@ function CognitoLogin({ onLogin }) {
       user.authenticateUser(authDetails, {
         onSuccess: (result) => {
           // Store tokens in localStorage for session management
-          localStorage.setItem('cognito_id_token', result.getIdToken().getJwtToken());
-          localStorage.setItem('cognito_access_token', result.getAccessToken().getJwtToken());
-          localStorage.setItem('cognito_refresh_token', result.getRefreshToken().getToken());
+          localStorage.setItem(COGNITO_ID_TOKEN, result.getIdToken().getJwtToken());
+          localStorage.setItem(COGNITO_ACCESS_TOKEN, result.getAccessToken().getJwtToken());
+          localStorage.setItem(COGNITO_REFRESH_TOKEN, result.getRefreshToken().getToken());
+          localStorage.setItem(COGNITO_USERNAME, username); // Store username for refresh
           setMessage('Login successful!');
           if (onLogin) onLogin();
           navigate('/'); // Redirect to home after login
