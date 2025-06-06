@@ -18,18 +18,22 @@ require('dotenv').config();
 
 // Mock multer to simulate file uploads in tests (no real disk or S3 interaction)
 jest.mock('multer', () => {
-  return () => ({
-    single: (fieldName) => (req, res, next) => {
-      if (req.headers['x-with-file'] === 'true') {
-        req.file = {
-          buffer: Buffer.from('test file content'),
-          originalname: 'test-file.jpg', // Use an image extension
-          mimetype: 'image/jpeg' // Use an image mimetype
-        };
+  function multer() {
+    return {
+      single: (fieldName) => (req, res, next) => {
+        if (req.headers['x-with-file'] === 'true') {
+          req.file = {
+            buffer: Buffer.from('test file content'),
+            originalname: 'test-file.jpg', // Use an image extension
+            mimetype: 'image/jpeg' // Use an image mimetype
+          };
+        }
+        next();
       }
-      next();
-    }
-  });
+    };
+  }
+  multer.memoryStorage = function () { return {}; };
+  return multer;
 });
 
 // Helper to (re-)mock JWT verification
