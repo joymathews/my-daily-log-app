@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import env from '../config/env';
 import Header from '../components/Header';
+import { getValidIdToken } from '../utils/cognitoToken';
 import '../styles/Pages.css';
 
 function ViewEvents({ onSignOut }) {
@@ -13,7 +14,7 @@ function ViewEvents({ onSignOut }) {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('cognito_id_token');
+        const token = await getValidIdToken();
         const response = await axios.get(`${env.VITE_API_BASE_URL}/view-events`, {
           headers: {
             'Authorization': `Bearer ${token}`
