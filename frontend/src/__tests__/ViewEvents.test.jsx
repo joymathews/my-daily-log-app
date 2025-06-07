@@ -111,3 +111,35 @@ it('renders list with correct accessibility roles', async () => {
     expect(screen.getByTestId('event-item-1')).toBeInTheDocument();
   });
 });
+
+// This test checks that clicking 'Load Previous Day' loads and displays events from the previous day.
+it('loads previous day events when Load Previous Day is clicked', async () => {
+  // First call: today's events
+  axios.get.mockResolvedValueOnce({ data: [
+    { id: 1, timestamp: '2025-06-07T10:00:00Z', event: 'Today Event' }
+  ] });
+  // Second call: previous day's events
+  axios.get.mockResolvedValueOnce({ data: [
+    { id: 2, timestamp: '2025-06-06T09:00:00Z', event: 'Previous Day Event' }
+  ] });
+  renderWithRouter(<ViewEvents />);
+  // Wait for today's events to load and the button to be enabled
+  const loadMoreBtn = await screen.findByRole('button', { name: /Load Previous Day/i });
+  await waitFor(() => expect(loadMoreBtn).toBeEnabled());
+  // Click Load Previous Day
+  fireEvent.click(loadMoreBtn);
+  // Wait for the previous day's group to appear
+  await screen.findByText((content) => /6 june 2025/i.test(content));
+  // Expand all day groups (today and previous day)
+  await waitFor(() => {
+    const toggleButtons = document.querySelectorAll('.event-day-toggle');
+    toggleButtons.forEach(btn => {
+      if (btn.getAttribute('aria-expanded') === 'false') fireEvent.click(btn);
+    });
+  });
+  // Now check for both events
+  await waitFor(() => {
+    expect(screen.getByText(/Today Event/i)).toBeInTheDocument();
+    expect(screen.getByText(/Previous Day Event/i)).toBeInTheDocument();
+  });
+});

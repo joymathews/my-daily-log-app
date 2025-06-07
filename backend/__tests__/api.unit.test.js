@@ -260,4 +260,31 @@ describe('API Unit Tests (using real app)', () => {
     jest.resetModules();
     mockJWT(); // Re-apply after reset
   });
+
+  test('GET /view-events-by-date should return events for a specific date', async () => {
+    const { DynamoDBDocumentClient, QueryCommand } = require('@aws-sdk/lib-dynamodb');
+    DynamoDBDocumentClient.__mockSend.mockReset();
+    DynamoDBDocumentClient.__mockSend.mockImplementation((command) => {
+      if (command instanceof QueryCommand) {
+        // Simulate only events for 2025-06-06
+        return Promise.resolve({
+          Items: [
+            { id: '1', event: 'Event on 6th', timestamp: '2025-06-06T10:00:00Z', userSub: 'test-user-sub' }
+          ],
+          Count: 1
+        });
+      }
+      return Promise.resolve({ Items: [], Count: 0 });
+    });
+    const createApp = require('../index');
+    const app = createApp();
+    const response = await request(app)
+      .get('/view-events-by-date?date=2025-06-06')
+      .set('Authorization', 'Bearer test.jwt.token');
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body.length).toBe(1);
+    expect(response.body[0].event).toBe('Event on 6th');
+    expect(response.body[0].timestamp).toContain('2025-06-06');
+  });
 });
