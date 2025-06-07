@@ -183,7 +183,7 @@ describe('API Unit Tests (using real app)', () => {
       .get('/view-events')
       .set('Authorization', 'Bearer test.jwt.token');
     expect(response.status).toBe(500);
-    expect(response.text).toBe('Error fetching events');
+    expect(JSON.parse(response.text)).toEqual({ error: 'Error fetching events' });
     // Remove this assertion if console.error is not a mock
     // expect(console.error).toHaveBeenCalled();
   });
