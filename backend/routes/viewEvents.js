@@ -92,4 +92,27 @@ module.exports = function(app, deps) {
       res.status(500).send('Error fetching events by date');
     }
   });
+
+  // Endpoint: Get all unique event dates for the user
+  app.get('/event-dates', authenticateJWT, async (req, res) => {
+    const userSub = req.user.sub;
+    try {
+      const params = {
+        TableName: DYNAMODB_TABLE_NAME,
+        IndexName: 'userSub-index',
+        KeyConditionExpression: 'userSub = :userSub',
+        ExpressionAttributeValues: { ':userSub': userSub },
+        ProjectionExpression: '#ts',
+        ExpressionAttributeNames: { '#ts': 'timestamp' }
+      };
+      const data = await dynamoDB.send(new QueryCommand(params));
+      const events = Array.isArray(data.Items) ? data.Items : [];
+      // Extract unique dates (YYYY-MM-DD)
+      const dateSet = new Set(events.map(e => e.timestamp.slice(0, 10)));
+      res.json(Array.from(dateSet));
+    } catch (error) {
+      console.error('Error fetching event dates:', error);
+      res.status(500).send('Error fetching event dates');
+    }
+  });
 };
