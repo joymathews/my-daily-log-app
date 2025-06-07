@@ -30,7 +30,7 @@ function Header({ onSignOut }) {
         </h1>
         <button
           className={`hamburger${menuOpen ? ' open' : ''}`}
-          aria-label="Open navigation menu"
+          aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
           aria-expanded={menuOpen}
           aria-controls="main-nav"
           onClick={() => setMenuOpen((m) => !m)}

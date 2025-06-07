@@ -5,15 +5,15 @@ import Header from '../components/Header';
 import { getValidIdToken } from '../utils/cognitoToken';
 import '../styles/Pages.css';
 
+// Helper to get today's date string
+const getTodayStr = () => new Date().toISOString().slice(0, 10);
+
 function ViewEvents({ onSignOut }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [eventDates, setEventDates] = useState([]); // Dates with data for date picker
-  const [selectedDate, setSelectedDate] = useState('');
-
-  // Helper to get today's date string
-  const getTodayStr = () => new Date().toISOString().slice(0, 10);
+  const [selectedDate, setSelectedDate] = useState(getTodayStr());
 
   // Fetch events for a specific date
   const fetchEventsByDate = async (date) => {
@@ -24,11 +24,16 @@ function ViewEvents({ onSignOut }) {
         headers: { 'Authorization': `Bearer ${token}` },
         params: { date }
       });
-      setEvents(response.data);
+      // Append new events, avoiding duplicates by event id
+      setEvents(prevEvents => {
+        const existingIds = new Set(prevEvents.map(ev => ev.id));
+        const newEvents = response.data.filter(ev => !existingIds.has(ev.id));
+        return [...prevEvents, ...newEvents];
+      });
       setError(null);
     } catch (error) {
       setError('Failed to load events. Please try again later.');
-      setEvents([]);
+      // Do not clear events on error
     } finally {
       setLoading(false);
     }
@@ -107,22 +112,8 @@ function ViewEvents({ onSignOut }) {
   const handleDateChange = async (e) => {
     const date = e.target.value;
     setSelectedDate(date);
-    // Fetch events for the selected date
-    try {
-      setLoading(true);
-      const token = await getValidIdToken();
-      const response = await axios.get(`${env.VITE_API_BASE_URL}/view-events-by-date`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        params: { date }
-      });
-      // Replace events with the selected date's events to avoid mixing data across dates
-      setEvents(response.data);
-      setError(null);
-    } catch (error) {
-      setError('Failed to load events. Please try again later.');
-    } finally {
-      setLoading(false);
-    }
+    // Fetch and append events for the selected date
+    fetchEventsByDate(date);
   };
 
   return (
@@ -132,7 +123,9 @@ function ViewEvents({ onSignOut }) {
         <h2 className="page-title fade-in">View Events</h2>
         {/* Date Picker UI */}
         <div className="date-picker-container">
+          <label htmlFor="event-date-input" className="visually-hidden">Select date to view events</label>
           <input
+            id="event-date-input"
             type="date"
             value={selectedDate}
             onChange={handleDateChange}

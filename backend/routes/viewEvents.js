@@ -49,10 +49,9 @@ module.exports = function(app, deps) {
       return res.status(400).json({ error: 'Missing date parameter' });
     }
     try {
-      // Calculate start and end ISO strings for the day
-      const start = new Date(date);
-      const end = new Date(date);
-      end.setDate(end.getDate() + 1);
+      // Calculate start and end ISO strings for the day in UTC
+      const start = new Date(`${date}T00:00:00Z`);
+      const end = new Date(start.getTime() + 24 * 60 * 60 * 1000); // next day 00:00:00Z
 
       const params = {
         TableName: DYNAMODB_TABLE_NAME,
