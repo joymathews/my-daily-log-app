@@ -102,8 +102,6 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
-        - AttributeName: userSub
-          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
