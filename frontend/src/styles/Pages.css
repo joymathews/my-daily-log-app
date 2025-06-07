@@ -428,3 +428,8 @@ button:disabled {
   color: var(--color-primary);
   transition: transform 0.2s;
 }
+
+/* Utility class for vertical spacing below elements */
+.mb-xxl {
+  margin-bottom: 1.5rem;
+}

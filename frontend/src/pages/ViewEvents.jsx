@@ -28,13 +28,16 @@ function ViewEvents({ onSignOut }) {
       if (append) {
         if (response.data.length === 0) {
           setNoMorePrevious(true);
+          // Do not update loadedDates if no events were returned
         } else {
           setNoMorePrevious(false);
+          setLoadedDates(prev => [...prev, date]);
         }
+      } else {
+        setLoadedDates([date]);
       }
       setEvents(prev => append ? [...prev, ...response.data] : response.data);
       setError(null);
-      setLoadedDates(prev => append ? [...prev, date] : [date]);
     } catch (error) {
       setError('Failed to load events. Please try again later.');
       if (!append) setEvents([]);
@@ -125,12 +128,12 @@ function ViewEvents({ onSignOut }) {
             <button
               onClick={loadPreviousDay}
               disabled={loadMoreLoading || noMorePrevious}
-              style={{ marginBottom: '1.5rem' }}
+              className="mb-xxl"
             >
               {loadMoreLoading ? 'Loading...' : 'Load Previous Day'}
             </button>
             {noMorePrevious && (
-              <div className="info-message" style={{ marginBottom: '1.5rem', color: '#888' }}>
+              <div className="info-message mb-xxl" style={{ color: '#888' }}>
                 No more previous days to load.
               </div>
             )}
