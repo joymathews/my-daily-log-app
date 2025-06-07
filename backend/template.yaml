@@ -102,9 +102,22 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
+        - AttributeName: userSub
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
       BillingMode: PAY_PER_REQUEST
       PointInTimeRecoverySpecification:
         PointInTimeRecoveryEnabled: true
+      GlobalSecondaryIndexes:
+        - IndexName: userSub-index
+          KeySchema:
+            - AttributeName: userSub
+              KeyType: HASH
+            - AttributeName: timestamp
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
