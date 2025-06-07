@@ -32,6 +32,11 @@
   text-shadow: none;
 }
 
+.header-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+
 .main-nav .nav-links {
   display: flex;
   list-style-type: none;

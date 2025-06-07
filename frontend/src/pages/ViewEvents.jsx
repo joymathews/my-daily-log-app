@@ -115,12 +115,8 @@ function ViewEvents({ onSignOut }) {
         headers: { 'Authorization': `Bearer ${token}` },
         params: { date }
       });
-      // Stack new events for the selected date on top of existing events, avoiding duplicates
-      setEvents(prevEvents => {
-        const prevIds = new Set(prevEvents.map(ev => ev.id));
-        const newEvents = response.data.filter(ev => !prevIds.has(ev.id));
-        return [...prevEvents, ...newEvents];
-      });
+      // Replace events with the selected date's events to avoid mixing data across dates
+      setEvents(response.data);
       setError(null);
     } catch (error) {
       setError('Failed to load events. Please try again later.');

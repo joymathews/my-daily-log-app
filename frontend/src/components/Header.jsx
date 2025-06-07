@@ -24,7 +24,7 @@ function Header({ onSignOut }) {
     <header className="app-header">
       <div className="header-row">
         <h1 className="header-title">
-          <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>
+          <Link to="/" className="header-title-link">
             Daily Notes
           </Link>
         </h1>

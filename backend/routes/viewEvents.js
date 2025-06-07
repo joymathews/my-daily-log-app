@@ -37,7 +37,7 @@ module.exports = function(app, deps) {
       res.status(200).json(eventsWithFileUrl);
     } catch (error) {
       console.error('Error fetching events:', error);
-      res.status(500).send('Error fetching events');
+      res.status(500).json({ error: 'Error fetching events' });
     }
   });
 
@@ -89,7 +89,7 @@ module.exports = function(app, deps) {
       res.status(200).json(eventsWithFileUrl);
     } catch (error) {
       console.error('Error fetching events by date:', error);
-      res.status(500).send('Error fetching events by date');
+      res.status(500).json({ error: 'Error fetching events by date' });
     }
   });
 
@@ -112,7 +112,7 @@ module.exports = function(app, deps) {
       res.json(Array.from(dateSet));
     } catch (error) {
       console.error('Error fetching event dates:', error);
-      res.status(500).send('Error fetching event dates');
+      res.status(500).json({ error: 'Error fetching event dates' });
     }
   });
 };
