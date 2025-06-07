@@ -143,7 +143,7 @@ function ViewEvents({ onSignOut }) {
                     aria-expanded={!!expandedDays[dayKey]}
                     aria-controls={`event-list-${dayKey}`}
                   >
-                    <span className="event-day-label">{new Date(dayKey).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                    <span className="event-day-label">{new Date(dayKey).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                     <span className="event-day-count">({grouped[dayKey].length} event{grouped[dayKey].length > 1 ? 's' : ''})</span>
                     <span className="event-day-arrow">{expandedDays[dayKey] ? '▲' : '▼'}</span>
                   </button>

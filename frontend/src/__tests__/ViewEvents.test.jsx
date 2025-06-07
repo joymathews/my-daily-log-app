@@ -129,7 +129,7 @@ it('loads previous day events when Load Previous Day is clicked', async () => {
   // Click Load Previous Day
   fireEvent.click(loadMoreBtn);
   // Wait for the previous day's group to appear
-  await screen.findByText((content) => /6 june 2025/i.test(content));
+  await screen.findByText((content) => /june\s*6.*2025/i.test(content));
   // Expand all day groups (today and previous day)
   await waitFor(() => {
     const toggleButtons = document.querySelectorAll('.event-day-toggle');
