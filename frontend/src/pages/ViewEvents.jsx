@@ -5,40 +5,55 @@ import Header from '../components/Header';
 import { getValidIdToken } from '../utils/cognitoToken';
 import '../styles/Pages.css';
 
+// Helper to get today's date string
+const getTodayStr = () => new Date().toISOString().slice(0, 10);
+
 function ViewEvents({ onSignOut }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [eventDates, setEventDates] = useState([]); // Dates with data for date picker
+  const [selectedDate, setSelectedDate] = useState(getTodayStr());
 
+  // Fetch events for a specific date
+  const fetchEventsByDate = async (date) => {
+    try {
+      setLoading(true);
+      const token = await getValidIdToken();
+      const response = await axios.get(`${env.VITE_API_BASE_URL}/view-events-by-date`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        params: { date }
+      });
+      // Append new events, avoiding duplicates by event id
+      setEvents(prevEvents => {
+        const existingIds = new Set(prevEvents.map(ev => ev.id));
+        const newEvents = response.data.filter(ev => !existingIds.has(ev.id));
+        return [...prevEvents, ...newEvents];
+      });
+      setError(null);
+    } catch (error) {
+      setError('Failed to load events. Please try again later.');
+      // Do not clear events on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // On mount, load today's events
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setLoading(true);
-        const token = await getValidIdToken();
-        const response = await axios.get(`${env.VITE_API_BASE_URL}/view-events`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        setEvents(response.data);
-        setError(null);
-      } catch (error) {
-        setError('Failed to load events. Please try again later.');
-        setEvents([]); // Clear events on error to avoid showing stale data
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchEvents();
+    fetchEventsByDate(getTodayStr());
+    // eslint-disable-next-line
   }, []);
+  // Detect user locale, fallback to 'en-US' if unavailable
+  const userLocale = typeof navigator !== 'undefined' && navigator.language ? navigator.language : 'en-US';
+
   // Format the timestamp for better readability
   const formatDate = (timestamp) => {
     if (!timestamp) return 'No date available';
     try {
       const date = new Date(timestamp);
       if (isNaN(date.getTime())) return 'Invalid date';
-      return new Intl.DateTimeFormat('en-US', {
+      return new Intl.DateTimeFormat(userLocale, {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
@@ -77,11 +92,54 @@ function ViewEvents({ onSignOut }) {
     setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }));
   };
 
+  // Fetch event dates for date picker on mount
+  useEffect(() => {
+    async function fetchEventDates() {
+      try {
+        const token = await getValidIdToken();
+        const response = await axios.get(`${env.VITE_API_BASE_URL}/event-dates`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        setEventDates(response.data);
+      } catch (err) {
+        // Ignore error for now, just don't show indicators
+      }
+    }
+    fetchEventDates();
+  }, []);
+
+  // Handler for date picker change
+  const handleDateChange = async (e) => {
+    const date = e.target.value;
+    setSelectedDate(date);
+    // Fetch and append events for the selected date
+    fetchEventsByDate(date);
+  };
+
   return (
     <>
       <Header onSignOut={onSignOut} />
       <main className="page-container">
         <h2 className="page-title fade-in">View Events</h2>
+        {/* Date Picker UI */}
+        <div className="date-picker-container">
+          <label htmlFor="event-date-input" className="visually-hidden">Select date to view events</label>
+          <input
+            id="event-date-input"
+            type="date"
+            value={selectedDate}
+            onChange={handleDateChange}
+            min={eventDates.length > 0 ? eventDates.slice().sort()[0] : undefined}
+            max={eventDates.length > 0 ? eventDates.slice().sort().reverse()[0] : undefined}
+            list="event-dates-list"
+          />
+          {/* Datalist for browser-native suggestions/highlighting */}
+          <datalist id="event-dates-list">
+            {eventDates.map(date => (
+              <option key={date} value={date} />
+            ))}
+          </datalist>
+        </div>
         {loading ? (
           <div className="loading">
             <div className="spinner" role="status" aria-label="Loading events"></div>
@@ -103,7 +161,7 @@ function ViewEvents({ onSignOut }) {
                   aria-expanded={!!expandedDays[dayKey]}
                   aria-controls={`event-list-${dayKey}`}
                 >
-                  <span className="event-day-label">{new Date(dayKey).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                  <span className="event-day-label">{new Date(dayKey).toLocaleDateString(userLocale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                   <span className="event-day-count">({grouped[dayKey].length} event{grouped[dayKey].length > 1 ? 's' : ''})</span>
                   <span className="event-day-arrow">{expandedDays[dayKey] ? '▲' : '▼'}</span>
                 </button>
