@@ -53,6 +53,7 @@ async function ensureTableExists() {
     AttributeDefinitions: [
       { AttributeName: 'id', AttributeType: 'S' },
       { AttributeName: 'userSub', AttributeType: 'S' },
+      { AttributeName: 'timestamp', AttributeType: 'S' }, // Add timestamp attribute
     ],
     BillingMode: 'PAY_PER_REQUEST',
     GlobalSecondaryIndexes: [
@@ -60,6 +61,7 @@ async function ensureTableExists() {
         IndexName: 'userSub-index',
         KeySchema: [
           { AttributeName: 'userSub', KeyType: 'HASH' },
+          { AttributeName: 'timestamp', KeyType: 'RANGE' }, // Add timestamp as sort key
         ],
         Projection: { ProjectionType: 'ALL' },
       },
