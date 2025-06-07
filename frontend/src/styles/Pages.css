@@ -434,7 +434,7 @@ button:disabled {
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 input[type="date"] {

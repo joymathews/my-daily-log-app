@@ -16,7 +16,7 @@ function ViewEvents({ onSignOut }) {
   const getTodayStr = () => new Date().toISOString().slice(0, 10);
 
   // Fetch events for a specific date
-  const fetchEventsByDate = async (date, append = false) => {
+  const fetchEventsByDate = async (date) => {
     try {
       setLoading(true);
       const token = await getValidIdToken();
@@ -135,7 +135,7 @@ function ViewEvents({ onSignOut }) {
       <main className="page-container">
         <h2 className="page-title fade-in">View Events</h2>
         {/* Date Picker UI */}
-        <div style={{ marginBottom: '1rem' }}>
+        <div className="date-picker-container">
           <input
             type="date"
             value={selectedDate}
