@@ -85,6 +85,15 @@ Resources:
         - image/png
         - image/gif
         - application/octet-stream
+      Cors:
+        AllowOrigin: !Ref CorsOrigin
+        AllowHeaders:
+          - Content-Type
+          - Authorization
+        AllowMethods:
+          - GET
+          - POST
+          - OPTIONS
 
   LogBucket:
     Type: AWS::S3::Bucket
