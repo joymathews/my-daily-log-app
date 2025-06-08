@@ -34,7 +34,7 @@ jobs:
       - name: Zip Lambda code
         run: |
           cd backend
-          zip -r lambda.zip lambda.js index.js config.js aws-factory.js routes/ node_modules/ package.json package-lock.json
+          zip -r lambda.zip lambda.js index.js config.js aws-factory.js routes/ middleware/ node_modules/ package.json package-lock.json
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
