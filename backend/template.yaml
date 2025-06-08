@@ -86,7 +86,7 @@ Resources:
         - image/gif
         - application/octet-stream
       Cors:
-        AllowOrigin: !Ref CorsOrigin
+        AllowOrigin: !Sub "'${CorsOrigin}'"
         AllowHeaders: "'Content-Type,Authorization'"
         AllowMethods: "'GET,POST,OPTIONS'"
 
