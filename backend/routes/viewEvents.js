@@ -1,11 +1,12 @@
 const { QueryCommand } = require('@aws-sdk/lib-dynamodb');
 const { GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const apiLimiter = require('../middleware/rateLimiter');
 
 module.exports = function(app, deps) {
   const { authenticateJWT, dynamoDB, DYNAMODB_TABLE_NAME, S3_BUCKET_NAME, LOCAL_DEV, S3_ENDPOINT, s3 } = deps;
 
-  app.get('/view-events', authenticateJWT, async (req, res) => {
+  app.get('/view-events', apiLimiter, authenticateJWT, async (req, res) => {
     const userSub = req.user.sub;
     try {
       const params = {
@@ -42,7 +43,7 @@ module.exports = function(app, deps) {
   });
 
   // New endpoint: Get events for a specific date
-  app.get('/view-events-by-date', authenticateJWT, async (req, res) => {
+  app.get('/view-events-by-date', apiLimiter, authenticateJWT, async (req, res) => {
     const userSub = req.user.sub;
     const { date } = req.query; // Expecting 'YYYY-MM-DD'
     if (!date) {
@@ -93,7 +94,7 @@ module.exports = function(app, deps) {
   });
 
   // Endpoint: Get all unique event dates for the user
-  app.get('/event-dates', authenticateJWT, async (req, res) => {
+  app.get('/event-dates', apiLimiter, authenticateJWT, async (req, res) => {
     const userSub = req.user.sub;
     try {
       const params = {

@@ -1,11 +1,12 @@
 const { v4: uuidv4 } = require('uuid');
 const { PutObjectCommand } = require('@aws-sdk/client-s3');
 const { PutCommand } = require('@aws-sdk/lib-dynamodb');
+const apiLimiter = require('../middleware/rateLimiter');
 
 module.exports = function(app, deps) {
   const { authenticateJWT, upload, dynamoDB, s3, S3_BUCKET_NAME, DYNAMODB_TABLE_NAME } = deps;
 
-  app.post('/log-event', authenticateJWT, upload.single('file'), async (req, res) => {
+  app.post('/log-event', apiLimiter, authenticateJWT, upload.single('file'), async (req, res) => {
     const { event } = req.body;
     const file = req.file;
     const userSub = req.user.sub;
