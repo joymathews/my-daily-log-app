@@ -1,10 +1,11 @@
 const { HeadBucketCommand } = require('@aws-sdk/client-s3');
 const { ScanCommand } = require('@aws-sdk/lib-dynamodb');
+const { healthLimiter } = require('../middleware/rateLimiter');
 
 module.exports = function(app, deps) {
   const { s3, dynamoDB, S3_BUCKET_NAME, DYNAMODB_TABLE_NAME } = deps;
 
-  app.get('/health', async (req, res) => {
+  app.get('/health', healthLimiter, async (req, res) => {
     try {
       const services = {
         s3: { status: 'unknown' },
