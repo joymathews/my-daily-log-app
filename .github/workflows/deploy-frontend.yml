@@ -3,6 +3,9 @@ name: Deploy Frontend to S3
 on:
   workflow_dispatch:  # Only run when manually triggered
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-frontend-to-s3
   cancel-in-progress: true
