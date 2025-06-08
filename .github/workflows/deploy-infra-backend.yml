@@ -3,6 +3,9 @@ name: Deploy SAM Infrastructure
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   deploy-infra:
     runs-on: ubuntu-latest
