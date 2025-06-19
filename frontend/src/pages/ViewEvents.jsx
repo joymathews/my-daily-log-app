@@ -27,6 +27,12 @@ function ViewEvents({ onSignOut }) {
 
   // Fetch events for a date range
   const fetchEventsByRange = async (startDate, endDate) => {
+    // Validate date format: YYYY-MM-DD
+    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+    if (!datePattern.test(startDate) || !datePattern.test(endDate)) {
+      setError('Invalid date format. Please use YYYY-MM-DD.');
+      return;
+    }
     try {
       setLoading(true);
       const token = await getValidIdToken();

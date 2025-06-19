@@ -12,7 +12,6 @@
 
 .fade-in {
   animation: fadeIn 0.4s ease-out forwards;
-  will-change: opacity;
 }
 
 /* Slide in from bottom - with subtle bouncing */
@@ -32,7 +31,6 @@
 
 .slide-in-bottom {
   animation: slideInBottom 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  will-change: transform, opacity;
 }
 
 /* Slide in from right - smooth with subtle elastic effect */
@@ -52,7 +50,6 @@
 
 .slide-in-right {
   animation: slideInRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  will-change: transform, opacity;
 }
 
 /* Only keep animations/classes actually used in the codebase */
@@ -75,7 +72,7 @@
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto;
-  will-change: transform;
+  will-change: transform; /* Only keep for spinner, which is a critical animation */
 }
 
 /* Skeleton loading animation */
