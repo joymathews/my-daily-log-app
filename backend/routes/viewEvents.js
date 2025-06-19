@@ -147,7 +147,13 @@ module.exports = function(app, deps) {
       if (!datePattern.test(startDate) || !datePattern.test(endDate)) {
         return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
       }
-      if (startDate > endDate) {
+      // Check for valid calendar dates
+      const startDateObj = new Date(`${startDate}T00:00:00Z`);
+      const endDateObj = new Date(`${endDate}T00:00:00Z`);
+      if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
+        return res.status(400).json({ error: 'Invalid calendar date.' });
+      }
+      if (startDateObj.getTime() > endDateObj.getTime()) {
         return res.status(400).json({ error: 'startDate cannot be after endDate.' });
       }
       try {
