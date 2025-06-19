@@ -3,47 +3,53 @@ import axios from 'axios';
 import env from '../config/env';
 import Header from '../components/Header';
 import { getValidIdToken } from '../utils/cognitoToken';
+import DateRangePicker from '../components/DateRangePicker';
 import '../styles/Pages.css';
 
 // Helper to get today's date string
 const getTodayStr = () => new Date().toISOString().slice(0, 10);
+// Helper to get date string N days ago
+const getDateNDaysAgo = (n) => {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+};
 
 function ViewEvents({ onSignOut }) {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [eventDates, setEventDates] = useState([]); // Dates with data for date picker
-  const [selectedDate, setSelectedDate] = useState(getTodayStr());
+  // Date range state
+  const [dateRange, setDateRange] = useState({
+    startDate: getDateNDaysAgo(6), // 7 days including today
+    endDate: getTodayStr()
+  });
 
-  // Fetch events for a specific date
-  const fetchEventsByDate = async (date) => {
+  // Fetch events for a date range
+  const fetchEventsByRange = async (startDate, endDate) => {
     try {
       setLoading(true);
       const token = await getValidIdToken();
-      const response = await axios.get(`${env.VITE_API_BASE_URL}/view-events-by-date`, {
+      const response = await axios.get(`${env.VITE_API_BASE_URL}/view-events-by-range`, {
         headers: { 'Authorization': `Bearer ${token}` },
-        params: { date }
+        params: { startDate, endDate }
       });
-      // Append new events, avoiding duplicates by event id
-      setEvents(prevEvents => {
-        const existingIds = new Set(prevEvents.map(ev => ev.id));
-        const newEvents = response.data.filter(ev => !existingIds.has(ev.id));
-        return [...prevEvents, ...newEvents];
-      });
+      setEvents(response.data);
       setError(null);
     } catch (error) {
       setError('Failed to load events. Please try again later.');
-      // Do not clear events on error
+      setEvents([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // On mount, load today's events
+  // On mount and when dateRange changes, fetch events
   useEffect(() => {
-    fetchEventsByDate(getTodayStr());
+    fetchEventsByRange(dateRange.startDate, dateRange.endDate);
     // eslint-disable-next-line
-  }, []);
+  }, [dateRange.startDate, dateRange.endDate]);
+
   // Detect user locale, fallback to 'en-US' if unavailable
   const userLocale = typeof navigator !== 'undefined' && navigator.language ? navigator.language : 'en-US';
 
@@ -92,54 +98,17 @@ function ViewEvents({ onSignOut }) {
     setExpandedDays((prev) => ({ ...prev, [dayKey]: !prev[dayKey] }));
   };
 
-  // Fetch event dates for date picker on mount
-  useEffect(() => {
-    async function fetchEventDates() {
-      try {
-        const token = await getValidIdToken();
-        const response = await axios.get(`${env.VITE_API_BASE_URL}/event-dates`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        setEventDates(response.data);
-      } catch (err) {
-        // Ignore error for now, just don't show indicators
-      }
-    }
-    fetchEventDates();
-  }, []);
-
-  // Handler for date picker change
-  const handleDateChange = async (e) => {
-    const date = e.target.value;
-    setSelectedDate(date);
-    // Fetch and append events for the selected date
-    fetchEventsByDate(date);
-  };
-
   return (
     <>
       <Header onSignOut={onSignOut} />
       <main className="page-container">
         <h2 className="page-title fade-in">View Events</h2>
-        {/* Date Picker UI */}
-        <div className="date-picker-container">
-          <label htmlFor="event-date-input" className="visually-hidden">Select date to view events</label>
-          <input
-            id="event-date-input"
-            type="date"
-            value={selectedDate}
-            onChange={handleDateChange}
-            min={eventDates.length > 0 ? eventDates.slice().sort()[0] : undefined}
-            max={eventDates.length > 0 ? eventDates.slice().sort().reverse()[0] : undefined}
-            list="event-dates-list"
-          />
-          {/* Datalist for browser-native suggestions/highlighting */}
-          <datalist id="event-dates-list">
-            {eventDates.map(date => (
-              <option key={date} value={date} />
-            ))}
-          </datalist>
-        </div>
+        {/* Date Range Picker UI */}
+        <DateRangePicker
+          startDate={dateRange.startDate}
+          endDate={dateRange.endDate}
+          onChange={setDateRange}
+        />
         {loading ? (
           <div className="loading">
             <div className="spinner" role="status" aria-label="Loading events"></div>
@@ -149,7 +118,7 @@ function ViewEvents({ onSignOut }) {
           <div className="error-message slide-in-right">{error}</div>
         ) : events.length === 0 ? (
           <div className="no-events fade-in">
-            <p>No events found. Start by logging your first event!</p>
+            <p>No events found for this date range.</p>
           </div>
         ) : (
           <div className="events-grouped-list" data-testid="events-grouped-list">
@@ -163,7 +132,7 @@ function ViewEvents({ onSignOut }) {
                 >
                   <span className="event-day-label">{new Date(dayKey).toLocaleDateString(userLocale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                   <span className="event-day-count">({grouped[dayKey].length} event{grouped[dayKey].length > 1 ? 's' : ''})</span>
-                  <span className="event-day-arrow">{expandedDays[dayKey] ? '▲' : '▼'}</span>
+                  <span className="event-day-arrow">{expandedDays[dayKey] ? '\u25b2' : '\u25bc'}</span>
                 </button>
                 {expandedDays[dayKey] && (
                   <ul className="events-list" id={`event-list-${dayKey}`} data-testid={`events-list-${dayKey}`}>

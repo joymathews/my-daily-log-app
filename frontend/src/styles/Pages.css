@@ -459,9 +459,33 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 
-/* Optional: Style the datalist dropdown for browsers that support it */
-datalist option {
-  background: var(--color-light, #f4f6f8);
-  color: var(--color-secondary, #333);
-  font-size: 1rem;
+/* Date Range Picker Styles */
+.date-range-picker-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  background: var(--color-light-gray);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  width: fit-content;
+}
+.date-range-picker-container input[type="date"] {
+  font-size: var(--font-size-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-gray);
+  border-radius: var(--border-radius-sm);
+  background: var(--color-white);
+  color: var(--color-secondary);
+  transition: border-color var(--transition-fast);
+}
+.date-range-picker-container input[type="date"]:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+.date-range-picker-container span {
+  color: var(--color-dark-gray);
+  font-size: var(--font-size-md);
 }
