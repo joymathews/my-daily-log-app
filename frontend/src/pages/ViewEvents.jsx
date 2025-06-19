@@ -58,11 +58,12 @@ function ViewEvents({ onSignOut }) {
     if (!timestamp) return 'No date available';
     try {
       const date = new Date(timestamp);
-      if (isNaN(date.getTime())) return 'Invalid date';
+      if (isNaN(date.getTime())) return 'Invalid date';      // Use more compact format on mobile
+      const isMobile = window.matchMedia('(max-width: 767px)').matches;
       return new Intl.DateTimeFormat(userLocale, {
-        weekday: 'long',
+        weekday: isMobile ? 'short' : 'long',
         year: 'numeric',
-        month: 'long',
+        month: isMobile ? 'short' : 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
@@ -129,8 +130,12 @@ function ViewEvents({ onSignOut }) {
                   onClick={() => toggleDay(dayKey)}
                   aria-expanded={!!expandedDays[dayKey]}
                   aria-controls={`event-list-${dayKey}`}
-                >
-                  <span className="event-day-label">{new Date(dayKey).toLocaleDateString(userLocale, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                >                <span className="event-day-label">{new Date(dayKey).toLocaleDateString(userLocale, { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}</span>
                   <span className="event-day-count">({grouped[dayKey].length} event{grouped[dayKey].length > 1 ? 's' : ''})</span>
                   <span className="event-day-arrow">{expandedDays[dayKey] ? '\u25b2' : '\u25bc'}</span>
                 </button>

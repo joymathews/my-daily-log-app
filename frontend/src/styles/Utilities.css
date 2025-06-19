@@ -1,58 +1,125 @@
 /* Utility classes and CSS variables for the application */
 
 :root {
-  /* Color palette */
+  /* Modern Color palette */
   --color-primary: #3498db;
+  --color-primary-light: #5dade2;
   --color-primary-dark: #2980b9;
+  --color-primary-transparent: rgba(52, 152, 219, 0.1);
+  
   --color-secondary: #2c3e50;
   --color-secondary-light: #34495e;
-  --color-accent: #e74c3c;
-  --color-success: #2ecc71;
-  --color-warning: #f39c12;
-  --color-info: #3498db;
-  --color-error: #e74c3c;
+  --color-secondary-dark: #1a2530;
   
-  /* Neutral colors */
+  --color-accent: #e74c3c;
+  --color-accent-light: #f09a8d;
+  --color-accent-dark: #c0392b;
+  
+  --color-success: #2ecc71;
+  --color-success-light: #7dcea0;
+  --color-success-dark: #27ae60;
+  
+  --color-warning: #f39c12;
+  --color-warning-light: #f8c471;
+  --color-warning-dark: #d35400;
+  
+  --color-info: #3498db;
+  --color-info-light: #7fb3d5;
+  --color-info-dark: #2874a6;
+  
+  --color-error: #e74c3c;
+  --color-error-light: #f1948a;
+  --color-error-dark: #c0392b;
+  
+  /* Neutral colors with more steps for flexibility */
   --color-white: #ffffff;
   --color-light: #ecf0f1;
   --color-light-gray: #f5f7fa;
-  --color-gray: #95a5a6;
-  --color-dark-gray: #7f8c8d;
+  --color-gray-100: #f7f9fc;
+  --color-gray-200: #e9ecef;
+  --color-gray-300: #dee2e6;
+  --color-gray-400: #ced4da;
+  --color-gray-500: #adb5bd;
+  --color-gray-600: #95a5a6;
+  --color-gray: var(--color-gray-600);
+  --color-gray-700: #7f8c8d;
+  --color-dark-gray: var(--color-gray-700);
+  --color-gray-800: #495057;
+  --color-gray-900: #343a40;
   --color-dark: #2c3e50;
   --color-black: #1a1a1a;
   
-  /* Typography */
-  --font-size-xs: 0.75rem;
-  --font-size-sm: 0.875rem;
-  --font-size-md: 1rem;
-  --font-size-lg: 1.25rem;
-  --font-size-xl: 1.5rem;
-  --font-size-2xl: 2rem;
-  --font-size-3xl: 2.5rem;
+  /* Typography - Responsive scaling */
+  --font-size-xs: clamp(0.65rem, 2vw, 0.75rem);
+  --font-size-sm: clamp(0.8rem, 2vw, 0.875rem);
+  --font-size-md: clamp(0.9rem, 2vw, 1rem);
+  --font-size-lg: clamp(1.1rem, 2vw, 1.25rem);
+  --font-size-xl: clamp(1.25rem, 2.5vw, 1.5rem);
+  --font-size-2xl: clamp(1.65rem, 3vw, 2rem);
+  --font-size-3xl: clamp(2rem, 4vw, 2.5rem);
+  --font-size-4xl: clamp(2.5rem, 5vw, 3rem);
   
-  /* Spacing */
-  --spacing-xs: 0.25rem;
-  --spacing-sm: 0.5rem;
+  /* Font weights */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Line heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  
+  /* Letter spacing */
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: 0em;
+  --letter-spacing-wide: 0.025em;
+  
+  /* Spacing - Using rem for consistency with responsive font size */
+  --spacing-3xs: 0.125rem;
+  --spacing-2xs: 0.25rem;
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  --spacing-4xl: 6rem;
   
-  /* Borders & Shadows */
+  /* Borders & Shadows - More granular for design flexibility */
+  --border-radius-xs: 2px;
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
   --border-radius-lg: 12px;
   --border-radius-xl: 16px;
+  --border-radius-2xl: 24px;
+  --border-radius-pill: 9999px;
   
+  /* More natural shadow system */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.05), 0 5px 10px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.05), 0 10px 10px rgba(0, 0, 0, 0.02);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.1);
+  --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.05);
   
-  /* Transitions */
-  --transition-fast: 0.2s ease;
-  --transition-medium: 0.3s ease;
-  --transition-slow: 0.5s ease;
+  /* Transitions - For smoother interactions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-medium: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* Z-index scale */
+  --z-index-dropdown: 1000;
+  --z-index-sticky: 1020;
+  --z-index-fixed: 1030;
+  --z-index-modal-backdrop: 1040;
+  --z-index-modal: 1050;
+  --z-index-popover: 1060;
+  --z-index-tooltip: 1070;
 }
 
 /* Margin & Padding utilities */
@@ -84,11 +151,30 @@
 .p-4 { padding: var(--spacing-lg); }
 .p-5 { padding: var(--spacing-xl); }
 
+/* Accessibility - visually hidden but available to screen readers */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Helper for forcing visible vs hidden */
+.visible { visibility: visible !important; }
+.hidden { visibility: hidden !important; }
+
 /* Display utilities */
-.d-flex { display: flex; }
-.d-block { display: block; }
-.d-inline-block { display: inline-block; }
-.d-none { display: none; }
+.d-none { display: none !important; }
+.d-block { display: block !important; }
+.d-flex { display: flex !important; }
+.d-inline-block { display: inline-block !important; }
+.d-inline-flex { display: inline-flex !important; }
+.d-grid { display: grid !important; }
 
 /* Flex utilities */
 .flex-row { flex-direction: row; }
@@ -134,3 +220,69 @@
 .position-absolute { position: absolute; }
 .position-fixed { position: fixed; }
 .position-sticky { position: sticky; }
+
+/* Responsive utilities - standard breakpoints */
+@media (min-width: 576px) {
+  .d-sm-none { display: none !important; }
+  .d-sm-block { display: block !important; }
+  .d-sm-flex { display: flex !important; }
+  .d-sm-inline-block { display: inline-block !important; }
+  .d-sm-inline-flex { display: inline-flex !important; }
+  .d-sm-grid { display: grid !important; }
+}
+
+@media (min-width: 768px) {
+  .d-md-none { display: none !important; }
+  .d-md-block { display: block !important; }
+  .d-md-flex { display: flex !important; }
+  .d-md-inline-block { display: inline-block !important; }
+  .d-md-inline-flex { display: inline-flex !important; }
+  .d-md-grid { display: grid !important; }
+}
+
+@media (min-width: 992px) {
+  .d-lg-none { display: none !important; }
+  .d-lg-block { display: block !important; }
+  .d-lg-flex { display: flex !important; }
+  .d-lg-inline-block { display: inline-block !important; }
+  .d-lg-inline-flex { display: inline-flex !important; }
+  .d-lg-grid { display: grid !important; }
+}
+
+@media (min-width: 1200px) {
+  .d-xl-none { display: none !important; }
+  .d-xl-block { display: block !important; }
+  .d-xl-flex { display: flex !important; }
+  .d-xl-inline-block { display: inline-block !important; }
+  .d-xl-inline-flex { display: inline-flex !important; }
+  .d-xl-grid { display: grid !important; }
+}
+
+/* Mobile-first responsive text alignment */
+.text-center { text-align: center !important; }
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+
+@media (min-width: 576px) {
+  .text-sm-center { text-align: center !important; }
+  .text-sm-left { text-align: left !important; }
+  .text-sm-right { text-align: right !important; }
+}
+
+@media (min-width: 768px) {
+  .text-md-center { text-align: center !important; }
+  .text-md-left { text-align: left !important; }
+  .text-md-right { text-align: right !important; }
+}
+
+@media (min-width: 992px) {
+  .text-lg-center { text-align: center !important; }
+  .text-lg-left { text-align: left !important; }
+  .text-lg-right { text-align: right !important; }
+}
+
+@media (min-width: 1200px) {
+  .text-xl-center { text-align: center !important; }
+  .text-xl-left { text-align: left !important; }
+  .text-xl-right { text-align: right !important; }
+}
