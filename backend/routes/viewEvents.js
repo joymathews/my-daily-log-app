@@ -142,6 +142,14 @@ module.exports = function(app, deps) {
       if (!startDate || !endDate) {
         return res.status(400).json({ error: 'Missing startDate or endDate parameter' });
       }
+      // Validate date format and order
+      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+      if (!datePattern.test(startDate) || !datePattern.test(endDate)) {
+        return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+      }
+      if (startDate > endDate) {
+        return res.status(400).json({ error: 'startDate cannot be after endDate.' });
+      }
       try {
         // Calculate ISO strings for the range in UTC
         const start = new Date(`${startDate}T00:00:00Z`);
