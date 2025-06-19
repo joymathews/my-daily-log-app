@@ -142,10 +142,25 @@ module.exports = function(app, deps) {
       if (!startDate || !endDate) {
         return res.status(400).json({ error: 'Missing startDate or endDate parameter' });
       }
+      // Validate date format and order
+      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+      if (!datePattern.test(startDate) || !datePattern.test(endDate)) {
+        return res.status(400).json({ error: 'Invalid date format. Use YYYY-MM-DD.' });
+      }
+      // Check for valid calendar dates
+      const startDateObj = new Date(`${startDate}T00:00:00Z`);
+      const endDateObj = new Date(`${endDate}T00:00:00Z`);
+      if (isNaN(startDateObj.getTime()) || isNaN(endDateObj.getTime())) {
+        return res.status(400).json({ error: 'Invalid calendar date.' });
+      }
+      if (startDateObj.getTime() > endDateObj.getTime()) {
+        return res.status(400).json({ error: 'startDate cannot be after endDate.' });
+      }
       try {
-        // Calculate ISO strings for the range in UTC
-        const start = new Date(`${startDate}T00:00:00Z`);
-        const end = new Date(`${endDate}T23:59:59.999Z`);
+        // Use the already created startDateObj and endDateObj
+        const start = startDateObj;
+        const end = new Date(endDateObj.getTime());
+        end.setUTCHours(23, 59, 59, 999); // Set to end of day UTC
         const params = {
           TableName: DYNAMODB_TABLE_NAME,
           IndexName: 'userSub-index',
