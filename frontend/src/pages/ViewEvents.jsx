@@ -38,7 +38,7 @@ function ViewEvents({ onSignOut }) {
       setError(null);
     } catch (error) {
       setError('Failed to load events. Please try again later.');
-      setEvents([]);
+      // Do not clear events on error; preserve previously loaded data
     } finally {
       setLoading(false);
     }
