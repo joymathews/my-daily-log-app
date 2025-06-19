@@ -157,9 +157,10 @@ module.exports = function(app, deps) {
         return res.status(400).json({ error: 'startDate cannot be after endDate.' });
       }
       try {
-        // Calculate ISO strings for the range in UTC
-        const start = new Date(`${startDate}T00:00:00Z`);
-        const end = new Date(`${endDate}T23:59:59.999Z`);
+        // Use the already created startDateObj and endDateObj
+        const start = startDateObj;
+        const end = new Date(endDateObj.getTime());
+        end.setUTCHours(23, 59, 59, 999); // Set to end of day UTC
         const params = {
           TableName: DYNAMODB_TABLE_NAME,
           IndexName: 'userSub-index',
