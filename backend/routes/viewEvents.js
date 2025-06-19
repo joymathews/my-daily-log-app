@@ -131,4 +131,55 @@ module.exports = function(app, deps) {
       }
     }
   );
+
+  app.get('/view-events-by-range',
+    ipLimiter,
+    authenticateJWT,
+    apiLimiter,
+    async (req, res) => {
+      const userSub = req.user.sub;
+      const { startDate, endDate } = req.query; // Expecting 'YYYY-MM-DD' format
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: 'Missing startDate or endDate parameter' });
+      }
+      try {
+        // Calculate ISO strings for the range in UTC
+        const start = new Date(`${startDate}T00:00:00Z`);
+        const end = new Date(`${endDate}T23:59:59.999Z`);
+        const params = {
+          TableName: DYNAMODB_TABLE_NAME,
+          IndexName: 'userSub-index',
+          KeyConditionExpression: 'userSub = :userSub AND #ts BETWEEN :start AND :end',
+          ExpressionAttributeNames: { '#ts': 'timestamp' },
+          ExpressionAttributeValues: {
+            ':userSub': userSub,
+            ':start': start.toISOString(),
+            ':end': end.toISOString()
+          }
+        };
+        const data = await dynamoDB.send(new QueryCommand(params));
+        const events = Array.isArray(data.Items) ? data.Items : [];
+        // File URL logic (same as existing)
+        const eventsWithFileUrl = await Promise.all(events.map(async event => {
+          const eventClone = { ...event };
+          if (eventClone.s3Key) {
+            if (LOCAL_DEV === 'true') {
+              eventClone.fileUrl = `${S3_ENDPOINT.replace(/\/$/, '')}/${S3_BUCKET_NAME}/${eventClone.s3Key}`;
+            } else {
+              const command = new GetObjectCommand({
+                Bucket: S3_BUCKET_NAME,
+                Key: eventClone.s3Key
+              });
+              eventClone.fileUrl = await getSignedUrl(s3, command, { expiresIn: 3600 });
+            }
+          }
+          return eventClone;
+        }));
+        res.status(200).json(eventsWithFileUrl);
+      } catch (error) {
+        console.error('Error fetching events by range:', error);
+        res.status(500).json({ error: 'Error fetching events by range' });
+      }
+    }
+  );
 };

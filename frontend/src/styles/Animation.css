@@ -1,6 +1,6 @@
-/* Animations for UI elements */
+/* Refined animations for UI elements with better performance */
 
-/* Fade in animation */
+/* Fade in animation - subtle and smooth */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -11,59 +11,50 @@
 }
 
 .fade-in {
-  animation: fadeIn 0.3s ease-in-out;
+  animation: fadeIn 0.4s ease-out forwards;
 }
 
-/* Slide in from bottom */
+/* Slide in from bottom - with subtle bouncing */
 @keyframes slideInBottom {
-  from {
+  0% {
     transform: translateY(20px);
     opacity: 0;
   }
-  to {
+  70% {
+    transform: translateY(-2px);
+  }
+  100% {
     transform: translateY(0);
     opacity: 1;
   }
 }
 
 .slide-in-bottom {
-  animation: slideInBottom 0.4s ease-out;
+  animation: slideInBottom 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-/* Slide in from right */
+/* Slide in from right - smooth with subtle elastic effect */
 @keyframes slideInRight {
-  from {
-    transform: translateX(20px);
+  0% {
+    transform: translateX(30px);
     opacity: 0;
   }
-  to {
+  70% {
+    transform: translateX(-5px);
+  }
+  100% {
     transform: translateX(0);
     opacity: 1;
   }
 }
 
 .slide-in-right {
-  animation: slideInRight 0.4s ease-out;
+  animation: slideInRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-/* Pulse effect */
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
+/* Only keep animations/classes actually used in the codebase */
 
-.pulse {
-  animation: pulse 2s infinite;
-}
-
-/* Loading spinner */
+/* Loading spinner - optimized for performance */
 @keyframes spin {
   0% {
     transform: rotate(0deg);
@@ -77,20 +68,43 @@
   width: 24px;
   height: 24px;
   border: 3px solid rgba(0, 0, 0, 0.1);
-  border-top-color: #3498db;
+  border-top-color: var(--color-primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto;
+  will-change: transform; /* Only keep for spinner, which is a critical animation */
 }
 
-/* Page transition */
+/* Skeleton loading animation */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton-loading {
+  background: linear-gradient(90deg, 
+    var(--color-gray-200) 0%, 
+    var(--color-gray-100) 50%, 
+    var(--color-gray-200) 100%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--border-radius-md);
+}
+
+/* CSS transition classes for React components */
 .page-transition-enter {
   opacity: 0;
+  transform: translateY(10px);
 }
 
 .page-transition-enter-active {
   opacity: 1;
-  transition: opacity 300ms;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
 }
 
 .page-transition-exit {
@@ -99,5 +113,14 @@
 
 .page-transition-exit-active {
   opacity: 0;
-  transition: opacity 300ms;
+  transition: opacity 200ms;
+}
+
+/* Mobile-optimized fade animations - reduced motion for better performance */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .slide-in-bottom,
+  .slide-in-right {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
 }
